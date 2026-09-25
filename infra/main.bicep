@@ -66,6 +66,14 @@ module functionApp 'core/host/functions.bicep' = {
     alwaysOn: false
     appSettings: {
       AzureWebJobsFeatureFlags: 'EnableWorkerIndexing'
+      APP_ENV: 'production'
+      APP_NAME: 'fastapi-on-azure-functions'
+      AUTH_ENABLED: 'false'
+      AUTH_BEARER_TOKEN: ''
+      CORS_ALLOW_ORIGINS: '*'
+      CORS_ALLOW_CREDENTIALS: 'false'
+      CORS_ALLOW_METHODS: '*'
+      CORS_ALLOW_HEADERS: '*'
     }
     applicationInsightsName: monitoring.outputs.applicationInsightsName
     appServicePlanId: appServicePlan.outputs.id

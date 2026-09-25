@@ -120,13 +120,28 @@ Functions:
     http://localhost:7071/hello/YourName
     ```
 
+### Environment, Auth, and CORS configuration
+
+The function app supports environment-driven behavior using these app settings:
+
+- `APP_ENV` (default: `development`)
+- `APP_NAME` (default: `fastapi-on-azure-functions`)
+- `AUTH_ENABLED` (`true`/`false`, default: `false`)
+- `AUTH_BEARER_TOKEN` (required when `AUTH_ENABLED=true`)
+- `CORS_ALLOW_ORIGINS` (comma-separated, default: `*`)
+- `CORS_ALLOW_CREDENTIALS` (`true`/`false`, default: `false`)
+- `CORS_ALLOW_METHODS` (comma-separated, default: `*`)
+- `CORS_ALLOW_HEADERS` (comma-separated, default: `*`)
+
+When auth is enabled, requests to `/sample` and `/hello/{name}` must include an `Authorization` header with the configured bearer token.
+
 ### Deploying to Azure
 
 There are three main ways to deploy this to Azure:
 
 * [Deploy with the VS Code Azure Functions extension](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-python#publish-the-project-to-azure). 
 * [Deploy with the Azure CLI](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-cli-python?tabs=azure-cli%2Cbash%2Cbrowser#create-supporting-azure-resources-for-your-function).
-* Deploy with the Azure Developer CLI: After [installing the `azd` tool](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd?tabs=localinstall%2Cwindows%2Cbrew), run `azd up` in the root of the project. You can also run `azd pipeline config` to set up a CI/CD pipeline for deployment.
+* Deploy with the Azure Developer CLI: After [installing the `azd` tool](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd?tabs=localinstall%2Cwindows%2Cbrew), run `az login`, `azd auth login`, and `azd up` in the root of the project. You can also run `azd pipeline config` to set up a CI/CD pipeline for deployment.
 
 All approaches will provision a Function App, Storage account (to store the code), and a Log Analytics workspace.
 
