@@ -1,6 +1,5 @@
 metadata description = 'Creates metric alerts for Azure Function reliability and latency.'
 param name string
-param location string = resourceGroup().location
 param functionAppName string
 param enabled bool = true
 

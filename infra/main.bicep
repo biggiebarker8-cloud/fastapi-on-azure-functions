@@ -46,6 +46,7 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
 }
 
 var prefix = '${name}-${resourceToken}'
+var functionAppName = '${prefix}-function-app'
 
 module monitoring './core/monitor/monitoring.bicep' = {
   name: 'monitoring'
@@ -95,16 +96,11 @@ module keyVault 'core/security/keyvault.bicep' = {
   }
 }
 
-resource keyVaultResource 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
-  name: keyVault.outputs.name
-  scope: resourceGroup
-}
-
 module functionApp 'core/host/functions.bicep' = {
   name: 'function'
   scope: resourceGroup
   params: {
-    name: '${prefix}-function-app'
+    name: functionAppName
     location: location
     tags: union(tags, { 'azd-service-name': 'api' })
     alwaysOn: appServiceSkuTier == 'ElasticPremium'
@@ -142,13 +138,13 @@ module diagnostics 'core/host/app-diagnostics.bicep' = {
   }
 }
 
-resource functionIdentitySecretUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(functionApp.outputs.identityPrincipalId)) {
-  name: guid(keyVault.outputs.id, functionApp.outputs.identityPrincipalId, 'key-vault-secrets-user')
-  scope: keyVaultResource
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
+module keyVaultRbac 'core/security/keyvault-rbac.bicep' = {
+  name: 'keyvault-rbac'
+  scope: resourceGroup
+  params: {
+    keyVaultName: keyVault.outputs.name
     principalId: functionApp.outputs.identityPrincipalId
-    principalType: 'ServicePrincipal'
+    principalNameSeed: functionAppName
   }
 }
 
@@ -167,8 +163,7 @@ module functionAlerts 'core/monitor/function-alerts.bicep' = {
   name: 'function-alerts'
   scope: resourceGroup
   params: {
-    name: '${prefix}-function'
-    location: location
+    name: '${take(prefix, 30)}-function'
     functionAppName: functionApp.outputs.name
   }
 }
