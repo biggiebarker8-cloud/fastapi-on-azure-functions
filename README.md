@@ -135,6 +135,26 @@ The function app supports environment-driven behavior using these app settings:
 
 When auth is enabled, requests to `/sample` and `/hello/{name}` must include an `Authorization` header with the configured bearer token.
 
+### Production Azure infrastructure defaults
+
+The infrastructure templates now default to a production-ready baseline:
+
+- Premium Functions plan (`EP1`, `ElasticPremium`)
+- System-assigned managed identity for the Function App
+- Key Vault for storing auth token secrets
+- CORS restricted via `frontendAllowedOrigins` infra parameter
+- Autoscale profile for Premium plans
+- Function App metric alerts for `Http5xx` and `AverageResponseTime`
+- Optional API Management (`deployApiManagement`, default `false`)
+
+To stay near a cost-sensitive setup (around low hundreds/month), keep:
+
+- `minimumElasticInstanceCount` at `1`
+- `deployApiManagement` as `false` unless needed
+- `functionAppScaleLimit` to a controlled value (for example `10`)
+
+If `authBearerToken` is left empty during deployment, set it later in Key Vault and restart the function app.
+
 ### Deploying to Azure
 
 There are three main ways to deploy this to Azure:
