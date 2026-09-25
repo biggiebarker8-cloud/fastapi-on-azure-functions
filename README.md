@@ -160,3 +160,17 @@ You can call the URL endpoints using your browser (GET requests) or one one of t
 Now you have a simple Azure Function App using the FastAPI framework, and you can continue building on it to develop more sophisticated applications.
 
 To learn more about leveraging WSGI and ASGI-compatible frameworks, see [Web frameworks](https://docs.microsoft.com/azure/azure-functions/functions-reference-python?tabs=asgi%2Cazurecli-linux%2Capplication-level#web-frameworks).
+
+## Karma creative API extensions
+
+This sample now includes additional API routes for a creative assistant profile named `Karma`:
+
+- `GET/PUT /identity` for assistant identity, tone, and lore
+- `POST/GET /universes` and `GET /universes/{universe_id}` for isolated lore universes
+- `POST/GET /characters` for universe-scoped character creation
+- `POST/GET /stories` with continuity checks and optional crossover support
+- `POST /merch-designs` for hoodie/t-shirt design workflow metadata
+- `POST /image-edits` for image-edit requests against existing assets
+- `GET /assets`, `GET /assets/{asset_id}`, and `POST /assets/{asset_id}/versions/{version}/restore` for asset version history
+
+These routes use an in-memory store intended as scaffolding for a future persistent backend.
