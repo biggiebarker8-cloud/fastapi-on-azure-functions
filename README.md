@@ -91,17 +91,25 @@ async def get_name(name: str):
 
 ### Testing locally
 
-1. Create a [Python virtual environment](https://docs.python.org/3/tutorial/venv.html#creating-virtual-environments) and activate it.
+1. (Optional, recommended) Run the first-time setup script:
 
-2. Run the command below to install the necessary requirements.
+    ```bash
+    bash ./setup.sh
+    ```
+
+    This creates `.venv`, installs Python dependencies, and pre-downloads the Azure Functions extension bundle (when `func` is installed).
+
+2. Create a [Python virtual environment](https://docs.python.org/3/tutorial/venv.html#creating-virtual-environments) and activate it.
+
+3. Run the command below to install the necessary requirements.
 
     ```log
     python -m pip install -r requirements.txt
     ```
 
-3. If you are using VS Code for development, click the "Run and Debug" button or follow [the instructions for running a function locally](https://docs.microsoft.com/azure/azure-functions/create-first-function-vs-code-python#run-the-function-locally). Outside of VS Code, follow [these instructions for using Core Tools commands directly to run the function locally](https://docs.microsoft.com/azure/azure-functions/functions-run-local?tabs=v4%2Cwindows%2Cpython%2Cportal%2Cbash#start).
+4. If you are using VS Code for development, click the "Run and Debug" button or follow [the instructions for running a function locally](https://docs.microsoft.com/azure/azure-functions/create-first-function-vs-code-python#run-the-function-locally). Outside of VS Code, follow [these instructions for using Core Tools commands directly to run the function locally](https://docs.microsoft.com/azure/azure-functions/functions-run-local?tabs=v4%2Cwindows%2Cpython%2Cportal%2Cbash#start).
 
-4. Once the function is running, test the function at the local URL displayed in the Terminal panel:
+5. Once the function is running, test the function at the local URL displayed in the Terminal panel:
 =======
 ```log
 Functions:
@@ -120,13 +128,48 @@ Functions:
     http://localhost:7071/hello/YourName
     ```
 
+### Environment, Auth, and CORS configuration
+
+The function app supports environment-driven behavior using these app settings:
+
+- `APP_ENV` (default: `development`)
+- `APP_NAME` (default: `fastapi-on-azure-functions`)
+- `AUTH_ENABLED` (`true`/`false`, default: `false`)
+- `AUTH_BEARER_TOKEN` (required when `AUTH_ENABLED=true`)
+- `CORS_ALLOW_ORIGINS` (comma-separated, default: `*`)
+- `CORS_ALLOW_CREDENTIALS` (`true`/`false`, default: `false`)
+- `CORS_ALLOW_METHODS` (comma-separated, default: `*`)
+- `CORS_ALLOW_HEADERS` (comma-separated, default: `*`)
+
+When auth is enabled, requests to `/sample` and `/hello/{name}` must include an `Authorization` header with the configured bearer token.
+
+### Production Azure infrastructure defaults
+
+The infrastructure templates now default to a production-ready baseline:
+
+- Premium Functions plan (`EP1`, `ElasticPremium`)
+- System-assigned managed identity for the Function App
+- Key Vault for storing auth token secrets
+- CORS restricted via `frontendAllowedOrigins` infra parameter
+- Autoscale profile for Premium plans
+- Function App metric alerts for `Http5xx` and `AverageResponseTime`
+- Optional API Management (`deployApiManagement`, default `false`)
+
+To stay near a cost-sensitive setup (around low hundreds/month), keep:
+
+- `minimumElasticInstanceCount` at `1`
+- `deployApiManagement` as `false` unless needed
+- `functionAppScaleLimit` to a controlled value (for example `10`)
+
+If `authBearerToken` is left empty during deployment, set it later in Key Vault and restart the function app.
+
 ### Deploying to Azure
 
 There are three main ways to deploy this to Azure:
 
 * [Deploy with the VS Code Azure Functions extension](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-python#publish-the-project-to-azure). 
 * [Deploy with the Azure CLI](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-cli-python?tabs=azure-cli%2Cbash%2Cbrowser#create-supporting-azure-resources-for-your-function).
-* Deploy with the Azure Developer CLI: After [installing the `azd` tool](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd?tabs=localinstall%2Cwindows%2Cbrew), run `azd up` in the root of the project. You can also run `azd pipeline config` to set up a CI/CD pipeline for deployment.
+* Deploy with the Azure Developer CLI: After [installing the `azd` tool](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd?tabs=localinstall%2Cwindows%2Cbrew), run `az login`, `azd auth login`, and `azd up` in the root of the project. You can also run `azd pipeline config` to set up a CI/CD pipeline for deployment.
 
 All approaches will provision a Function App, Storage account (to store the code), and a Log Analytics workspace.
 
