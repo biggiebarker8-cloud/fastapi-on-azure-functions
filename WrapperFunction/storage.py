@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Dict
 
-from .models import Asset, AssetVersion, Character, Story, Universe
+from .models import Asset, AssetVersion, Character, Story, Universe, UserPreferenceProfile
 
 
 def _now_iso() -> str:
@@ -16,6 +16,7 @@ class InMemoryStore:
         self.characters: Dict[str, Character] = {}
         self.stories: Dict[str, Story] = {}
         self.assets: Dict[str, Asset] = {}
+        self.preferences: UserPreferenceProfile = UserPreferenceProfile()
 
     def add_universe(self, universe: Universe) -> Universe:
         self.universes[universe.id] = universe

@@ -6,6 +6,8 @@ from .models import (
     CharacterCreate,
     ImageEditRequest,
     MerchDesignCreate,
+    NonLinearThoughtRequest,
+    PreferenceUpdate,
     StoryCreate,
     UniverseCreate,
 )
@@ -42,6 +44,21 @@ async def get_identity():
 @app.put("/identity")
 async def update_identity(name: str | None = None, tone: str | None = None, lore: str | None = None):
     return service.set_identity(name=name, tone=tone, lore=lore)
+
+
+@app.get("/preferences")
+async def get_preferences():
+    return store.preferences
+
+
+@app.put("/preferences")
+async def update_preferences(payload: PreferenceUpdate):
+    return service.update_preferences(payload)
+
+
+@app.post("/structure-thought")
+async def structure_thought(payload: NonLinearThoughtRequest):
+    return service.structure_non_linear_input(payload)
 
 
 @app.post("/universes")

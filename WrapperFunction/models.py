@@ -122,3 +122,34 @@ class Asset(BaseModel):
 class ModerationResult(BaseModel):
     allowed: bool
     reason: Optional[str] = None
+
+
+class UserPreferenceProfile(BaseModel):
+    likes: List[str] = Field(default_factory=list)
+    dislikes: List[str] = Field(default_factory=list)
+    output_preferences: List[str] = Field(default_factory=list)
+    thinking_profile: str = "non-linear"
+    desired_assistant_behavior: str = "Straight feedback when ideas are not feasible."
+    updated_at: str = Field(default_factory=_now_iso)
+
+
+class PreferenceUpdate(BaseModel):
+    likes: List[str] = Field(default_factory=list)
+    dislikes: List[str] = Field(default_factory=list)
+    output_preferences: List[str] = Field(default_factory=list)
+    thinking_profile: str = "non-linear"
+    desired_assistant_behavior: str = "Straight feedback when ideas are not feasible."
+
+
+class NonLinearThoughtRequest(BaseModel):
+    raw_input: str
+    goal: str = ""
+    constraints: List[str] = Field(default_factory=list)
+
+
+class StructuredThoughtResponse(BaseModel):
+    summary: str
+    assumptions: List[str] = Field(default_factory=list)
+    phases: List[str] = Field(default_factory=list)
+    feasibility: Literal["works", "won't_work_without_changes"]
+    straight_feedback: str

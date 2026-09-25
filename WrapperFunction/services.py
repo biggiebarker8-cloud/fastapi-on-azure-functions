@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from fastapi import HTTPException
 
 from .models import (
@@ -9,10 +11,14 @@ from .models import (
     CharacterCreate,
     ImageEditRequest,
     MerchDesignCreate,
+    NonLinearThoughtRequest,
+    PreferenceUpdate,
     Story,
     StoryCreate,
+    StructuredThoughtResponse,
     Universe,
     UniverseCreate,
+    UserPreferenceProfile,
 )
 from .moderation import moderate_text
 from .storage import InMemoryStore
@@ -31,6 +37,50 @@ class KarmaService:
         if lore is not None:
             self.identity.lore = lore
         return self.identity
+
+    def update_preferences(self, payload: PreferenceUpdate) -> UserPreferenceProfile:
+        self.store.preferences.likes = payload.likes
+        self.store.preferences.dislikes = payload.dislikes
+        self.store.preferences.output_preferences = payload.output_preferences
+        self.store.preferences.thinking_profile = payload.thinking_profile
+        self.store.preferences.desired_assistant_behavior = payload.desired_assistant_behavior
+        self.store.preferences.updated_at = datetime.now(timezone.utc).isoformat()
+        return self.store.preferences
+
+    def structure_non_linear_input(self, payload: NonLinearThoughtRequest) -> StructuredThoughtResponse:
+        check = moderate_text(f"{payload.raw_input} {payload.goal}")
+        if not check.allowed:
+            raise HTTPException(status_code=400, detail=check.reason)
+
+        phases = [
+            "Define one concrete outcome.",
+            "Split the idea into modules and dependencies.",
+            "Prioritize by impact and implementation risk.",
+            "Execute highest-priority slice and re-evaluate.",
+        ]
+        if payload.constraints:
+            phases.append("Adjust scope to satisfy listed constraints.")
+
+        infeasible_markers = {"all permissions", "doesn't forget anything", "self install all plugins"}
+        lowered = payload.raw_input.lower()
+        infeasible = any(marker in lowered for marker in infeasible_markers)
+        feasibility = "won't_work_without_changes" if infeasible else "works"
+        feedback = (
+            "Straight answer: this won't work as-is; scope or permissions must change."
+            if infeasible
+            else "Straight answer: this can work with phased implementation."
+        )
+        assumptions = [
+            "Preference memory is profile-based and explicitly editable.",
+            "Output style should stay blunt, caring, and structured.",
+        ]
+        return StructuredThoughtResponse(
+            summary=payload.goal or "Structured action plan from non-linear input.",
+            assumptions=assumptions + payload.constraints,
+            phases=phases,
+            feasibility=feasibility,
+            straight_feedback=feedback,
+        )
 
     def create_universe(self, payload: UniverseCreate) -> Universe:
         check = moderate_text(f"{payload.name} {payload.canon} {payload.timeline}")
