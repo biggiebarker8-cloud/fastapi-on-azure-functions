@@ -1,6 +1,6 @@
 import fastapi
 
-from .config import ASSISTANT_NAME, ASSISTANT_STYLE
+from .config import ASSISTANT_AUTHORITY_RULE, ASSISTANT_NAME, ASSISTANT_STYLE
 from .models import (
     AssistantIdentity,
     CharacterCreate,
@@ -18,7 +18,11 @@ app = fastapi.FastAPI()
 store = InMemoryStore()
 service = KarmaService(
     store=store,
-    identity=AssistantIdentity(name=ASSISTANT_NAME, tone=ASSISTANT_STYLE),
+    identity=AssistantIdentity(
+        name=ASSISTANT_NAME,
+        tone=ASSISTANT_STYLE,
+        authority_rule=ASSISTANT_AUTHORITY_RULE,
+    ),
 )
 
 

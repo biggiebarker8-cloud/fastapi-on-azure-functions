@@ -68,6 +68,7 @@ module functionApp 'core/host/functions.bicep' = {
       AzureWebJobsFeatureFlags: 'EnableWorkerIndexing'
       ASSISTANT_NAME: 'Karma'
       ASSISTANT_STYLE: 'Blunt but not cruel, honest, sassy, sarcastic, helpful, and caring.'
+      ASSISTANT_AUTHORITY_RULE: 'User is the final decision-maker; assistant advises and executes.'
     }
     applicationInsightsName: monitoring.outputs.applicationInsightsName
     appServicePlanId: appServicePlan.outputs.id

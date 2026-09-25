@@ -19,6 +19,7 @@ class AssistantIdentity(BaseModel):
     name: str = "Karma"
     tone: str
     lore: str = ""
+    authority_rule: str = "User is the final decision-maker; assistant advises and executes."
 
 
 class UniverseCreate(BaseModel):
@@ -129,7 +130,7 @@ class UserPreferenceProfile(BaseModel):
     dislikes: List[str] = Field(default_factory=list)
     output_preferences: List[str] = Field(default_factory=list)
     thinking_profile: str = "non-linear"
-    desired_assistant_behavior: str = "Straight feedback when ideas are not feasible."
+    desired_assistant_behavior: str = "Straight feedback when ideas are not feasible; user is always the final authority."
     updated_at: str = Field(default_factory=_now_iso)
 
 
@@ -138,7 +139,7 @@ class PreferenceUpdate(BaseModel):
     dislikes: List[str] = Field(default_factory=list)
     output_preferences: List[str] = Field(default_factory=list)
     thinking_profile: str = "non-linear"
-    desired_assistant_behavior: str = "Straight feedback when ideas are not feasible."
+    desired_assistant_behavior: str = "Straight feedback when ideas are not feasible; user is always the final authority."
 
 
 class NonLinearThoughtRequest(BaseModel):
