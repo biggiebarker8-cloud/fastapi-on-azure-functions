@@ -95,6 +95,11 @@ module keyVault 'core/security/keyvault.bicep' = {
   }
 }
 
+resource keyVaultResource 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
+  name: keyVault.outputs.name
+  scope: resourceGroup
+}
+
 module functionApp 'core/host/functions.bicep' = {
   name: 'function'
   scope: resourceGroup
@@ -139,7 +144,7 @@ module diagnostics 'core/host/app-diagnostics.bicep' = {
 
 resource functionIdentitySecretUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(functionApp.outputs.identityPrincipalId)) {
   name: guid(keyVault.outputs.id, functionApp.outputs.identityPrincipalId, 'key-vault-secrets-user')
-  scope: resourceGroup
+  scope: keyVaultResource
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
     principalId: functionApp.outputs.identityPrincipalId
