@@ -7,6 +7,8 @@ from fastapi import HTTPException
 from WrapperFunction.actor_context import reset_current_actor, set_current_actor
 from WrapperFunction.models import (
     ApprovalDecision,
+    ApprovalRequest,
+    ApprovalRequestCreate,
     AssistantIdentity,
     ImageEditRequest,
     LearningPolicyUpdate,
@@ -147,6 +149,37 @@ class KarmaServiceTests(unittest.TestCase):
         with self.assertRaises(HTTPException):
             self.service.toggle_plugin(plugin.id, PluginToggleRequest(enabled=True, requested_by="owner"))
 
+    def test_plugin_cannot_enable_with_non_owner_gated_approval(self) -> None:
+        plugin = self.service.draft_plugin(
+            PluginDraftCreate(
+                name="approval-bypass",
+                owner="owner",
+                plugin_type="integration",
+                capabilities=["read_data", "run_workflow"],
+            )
+        )
+        self.service.validate_plugin(plugin.id)
+        self.service.stage_plugin(plugin.id)
+
+        bypass_approval = self.store.add_approval(
+            ApprovalRequest(
+                action_type="plugin_publish",
+                target_type="plugin",
+                target_id=plugin.id,
+                requested_by="reviewer",
+                required_owner_approval=False,
+                status="approved",
+                decided_by="reviewer",
+            )
+        )
+
+        plugin = self.store.plugins[plugin.id]
+        plugin.approval_request_id = bypass_approval.id
+        plugin.lifecycle_state = "staged"
+
+        with self.assertRaises(HTTPException):
+            self.service.toggle_plugin(plugin.id, PluginToggleRequest(enabled=True, requested_by="owner"))
+
     def test_owner_gated_actions_require_actor_context(self) -> None:
         token = set_current_actor("")
         try:
@@ -262,6 +295,29 @@ class KarmaServiceTests(unittest.TestCase):
         enabled = self.service.toggle_skill(skill.id, SkillToggleRequest(enabled=True, requested_by="owner"))
         self.assertTrue(enabled.enabled)
 
+    def test_skill_is_not_enabled_by_unrelated_approval_decision(self) -> None:
+        skill = self.service.create_skill(
+            SkillCreate(
+                name="guardian",
+                owner="owner",
+                skill_type="analytics",
+                capabilities=["analyze_metrics", "use_external_api"],
+                external_api_access=True,
+            )
+        )
+        unrelated = self.service.create_approval_request(
+            ApprovalRequestCreate(
+                action_type="skill_external_access",
+                target_type="skill",
+                target_id=skill.id,
+                required_owner_approval=False,
+            )
+        )
+
+        self.service.decide_approval(unrelated.id, ApprovalDecision(approve=True, decided_by="reviewer"))
+
+        self.assertFalse(self.store.skills[skill.id].enabled)
+
     def test_learning_policy_change_requires_approved_request(self) -> None:
         with self.assertRaises(HTTPException):
             self.service.update_learning_policy(
@@ -288,6 +344,24 @@ class KarmaServiceTests(unittest.TestCase):
             )
 
         self.assertEqual(context.exception.status_code, 400)
+
+    def test_learning_policy_rejects_non_owner_gated_approval(self) -> None:
+        bypass = self.store.add_approval(
+            ApprovalRequest(
+                action_type="learning_rule_change",
+                target_type="learning_policy",
+                target_id="learning_policy",
+                requested_by="reviewer",
+                required_owner_approval=False,
+                status="approved",
+                decided_by="reviewer",
+            )
+        )
+
+        with self.assertRaises(HTTPException):
+            self.service.update_learning_policy(
+                LearningPolicyUpdate(auto_approve_low_risk_tuning=True, approval_request_id=bypass.id)
+            )
 
     def test_low_risk_playbook_can_auto_activate_when_policy_enabled(self) -> None:
         policy_approval = self.service.request_learning_policy_change()

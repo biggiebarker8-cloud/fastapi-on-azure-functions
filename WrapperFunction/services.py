@@ -425,6 +425,14 @@ class KarmaService:
     def create_approval_request(self, payload: ApprovalRequestCreate) -> ApprovalRequest:
         approval_payload = payload.model_dump()
         approval_payload["requested_by"] = self._current_actor()
+        if (
+            approval_payload["action_type"] in {"plugin_publish", "plugin_update", "skill_external_access"}
+            or (
+                approval_payload["action_type"] == "learning_rule_change"
+                and approval_payload["target_type"] in {"playbook", "learning_policy"}
+            )
+        ):
+            approval_payload["required_owner_approval"] = True
         approval = ApprovalRequest(**approval_payload)
         return self.store.add_approval(approval)
 
@@ -469,7 +477,12 @@ class KarmaService:
                     plugin.updated_at = datetime.now(timezone.utc).isoformat()
         elif approval.target_type == "skill":
             skill = self.store.skills.get(approval.target_id)
-            if skill and payload.approve:
+            if (
+                skill
+                and payload.approve
+                and approval.action_type == "skill_external_access"
+                and skill.approval_request_id == approval.id
+            ):
                 with self.store.lock:
                     skill.enabled = True
                     skill.updated_at = datetime.now(timezone.utc).isoformat()
@@ -552,6 +565,7 @@ class KarmaService:
             not approval
             or approval.target_type != "learning_policy"
             or approval.action_type != "learning_rule_change"
+            or not approval.required_owner_approval
         ):
             raise HTTPException(status_code=400, detail="Approval request does not apply to learning policy.")
         if approval.applied_at is not None:
@@ -613,6 +627,7 @@ class KarmaService:
             if (
                 candidate
                 and candidate.status == "approved"
+                and candidate.required_owner_approval
                 and candidate.target_type == "plugin"
                 and candidate.target_id == plugin.id
                 and candidate.action_type in {"plugin_publish", "plugin_update"}
@@ -642,6 +657,8 @@ class KarmaService:
             if approval.id == exclude_approval_id:
                 continue
             if approval.status != "approved":
+                continue
+            if not approval.required_owner_approval:
                 continue
             if approval.target_type != "plugin" or approval.target_id != plugin_id:
                 continue
