@@ -53,7 +53,7 @@ class KarmaApiRouteTests(unittest.TestCase):
         self.assertEqual(body["tone"], original["tone"])
         self.assertEqual(body["lore"], "new lore")
 
-    def test_knowledge_base_routes_return_bytedanabe_and_lark(self):
+    def test_knowledge_base_routes_return_seeded_entries(self):
         wf.AUTH_ENABLED = False
 
         response = self.client.get("/knowledge-bases")
@@ -62,6 +62,8 @@ class KarmaApiRouteTests(unittest.TestCase):
 
         self.assertIn("bytedanabe", ids)
         self.assertIn("lark", ids)
+        self.assertIn("wix", ids)
+        self.assertIn("website-building", ids)
 
     def test_knowledge_base_route_supports_alias_lookup(self):
         wf.AUTH_ENABLED = False
@@ -76,6 +78,16 @@ class KarmaApiRouteTests(unittest.TestCase):
         response = self.client.get("/knowledge-bases/unknown")
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "Knowledge base not found.")
+
+    def test_knowledge_base_route_returns_wix_content(self):
+        wf.AUTH_ENABLED = False
+
+        response = self.client.get("/knowledge-bases/wix")
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+
+        self.assertEqual(body["id"], "wix")
+        self.assertTrue(any(section["heading"] == "Wix platform fundamentals" for section in body["sections"]))
 
     def test_characters_route_filters_by_universe(self):
         wf.AUTH_ENABLED = False
