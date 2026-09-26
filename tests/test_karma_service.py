@@ -13,6 +13,7 @@ from WrapperFunction.models import (
     PlaybookCreate,
     PluginDraftCreate,
     PluginToggleRequest,
+    PluginVersionUpdate,
     SkillCreate,
     SkillToggleRequest,
     UniverseCreate,
@@ -123,6 +124,56 @@ class KarmaServiceTests(unittest.TestCase):
         self.service.decide_approval(approval.id, ApprovalDecision(approve=True, decided_by="owner"))
         enabled = self.service.toggle_plugin(plugin.id, PluginToggleRequest(enabled=True, requested_by="owner"))
         self.assertEqual(enabled.lifecycle_state, "enabled")
+        self.assertEqual(enabled.lifecycle_state, "enabled")
+    def test_plugin_cannot_enable_without_approved_request(self) -> None:
+        plugin = self.service.draft_plugin(
+            PluginDraftCreate(
+                name="metrics-sync",
+                owner="owner",
+                owner="owner",
+                capabilities=["read_data", "analyze_metrics"],
+            )
+        )
+        self.service.validate_plugin(plugin.id)
+        self.service.stage_plugin(plugin.id)
+
+        with self.assertRaises(HTTPException):
+            self.service.toggle_plugin(plugin.id, PluginToggleRequest(enabled=True, requested_by="owner"))
+
+    def test_rejected_plugin_update_preserves_live_version_and_state(self) -> None:
+        plugin = self.service.draft_plugin(
+            PluginDraftCreate(
+                name="shop-sync",
+                owner="owner",
+                plugin_type="integration",
+                capabilities=["read_data", "run_workflow"],
+            )
+        )
+        self.service.validate_plugin(plugin.id)
+        self.service.stage_plugin(plugin.id)
+        publish_approval = self.service.submit_plugin_for_approval(plugin.id, requested_by="owner")
+        self.service.decide_approval(publish_approval.id, ApprovalDecision(approve=True, decided_by="not-owner"))
+
+        updated_plugin = self.store.plugins[plugin.id]
+        self.assertEqual(publish_approval.requested_by, "owner")
+        self.assertEqual(updated_plugin.lifecycle_state, "enabled")
+
+        update_approval = self.service.update_plugin_version(
+            plugin.id,
+            PluginVersionUpdate(version="0.2.0", requested_by="not-owner"),
+        )
+        updated_plugin = self.store.plugins[plugin.id]
+        self.assertEqual(update_approval.requested_by, "owner")
+        self.assertEqual(updated_plugin.version, "0.1.0")
+        self.assertEqual(updated_plugin.pending_version, "0.2.0")
+        self.assertEqual(updated_plugin.lifecycle_state, "enabled")
+
+        self.service.decide_approval(update_approval.id, ApprovalDecision(approve=False, decided_by="not-owner"))
+
+        updated_plugin = self.store.plugins[plugin.id]
+        self.assertEqual(updated_plugin.version, "0.1.0")
+        self.assertIsNone(updated_plugin.pending_version)
+        self.assertEqual(updated_plugin.lifecycle_state, "enabled")
 
     def test_skill_external_access_requires_approval(self) -> None:
         skill = self.service.create_skill(

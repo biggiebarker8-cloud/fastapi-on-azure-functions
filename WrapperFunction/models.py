@@ -209,6 +209,7 @@ class Plugin(BaseModel):
     health_status: Literal["unknown", "healthy", "unhealthy"] = "unknown"
     validation_notes: list[str] = Field(default_factory=list)
     approval_request_id: str | None = None
+    pending_version: str | None = None
     rollback_history: list[str] = Field(default_factory=list)
     secret_scope: str = ""
     created_at: str = Field(default_factory=_now_iso)

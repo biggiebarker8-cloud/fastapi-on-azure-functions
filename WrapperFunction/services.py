@@ -268,12 +268,11 @@ class KarmaService:
             plugin.approval_request_id = approval.id
             plugin.updated_at = datetime.now(timezone.utc).isoformat()
         return approval
-
     def update_plugin_version(self, plugin_id: str, payload: PluginVersionUpdate) -> ApprovalRequest:
         plugin = self._get_plugin_or_404(plugin_id)
         with self.store.lock:
-            plugin.version = payload.version
-            plugin.lifecycle_state = "pending_approval"
+        with self.store.lock:
+            plugin.pending_version = payload.version
             plugin.updated_at = datetime.now(timezone.utc).isoformat()
         approval = self.create_approval_request(
             ApprovalRequestCreate(
@@ -293,8 +292,10 @@ class KarmaService:
         plugin = self._get_plugin_or_404(plugin_id)
         if plugin.lifecycle_state == "killed" and payload.enabled:
             raise HTTPException(status_code=400, detail="Killed plugins must be rolled back or rebuilt before enabling.")
-        if payload.enabled and plugin.approval_request_id and not self._approval_is_approved(plugin.approval_request_id):
-            raise HTTPException(status_code=403, detail="Plugin enablement requires approved request.")
+        if payload.enabled:
+            approval = self._get_required_approved_plugin_approval(plugin)
+            if approval.action_type not in {"plugin_publish", "plugin_update"}:
+                raise HTTPException(status_code=403, detail="Plugin enablement requires approved publish or update request.")
 
         with self.store.lock:
             plugin.lifecycle_state = "enabled" if payload.enabled else "disabled"
@@ -354,7 +355,10 @@ class KarmaService:
         return skill
 
     def create_approval_request(self, payload: ApprovalRequestCreate) -> ApprovalRequest:
-        approval = ApprovalRequest(**payload.model_dump())
+        approval_data = payload.model_dump()
+        if payload.required_owner_approval:
+            approval_data["requested_by"] = self._current_actor()
+        approval = ApprovalRequest(**approval_data)
         return self.store.add_approval(approval)
 
     def decide_approval(self, approval_id: str, payload: ApprovalDecision) -> ApprovalRequest:
@@ -366,7 +370,7 @@ class KarmaService:
 
         with self.store.lock:
             approval.status = "approved" if payload.approve else "rejected"
-            approval.decided_by = payload.decided_by
+            approval.decided_by = self._current_actor() if approval.required_owner_approval else payload.decided_by
             approval.decision_notes = payload.notes
             approval.decided_at = datetime.now(timezone.utc).isoformat()
 
@@ -374,7 +378,12 @@ class KarmaService:
             plugin = self.store.plugins.get(approval.target_id)
             if plugin:
                 with self.store.lock:
-                    plugin.lifecycle_state = "enabled" if payload.approve else "disabled"
+                    if approval.action_type == "plugin_publish":
+                        plugin.lifecycle_state = "enabled" if payload.approve else "staged"
+                    elif approval.action_type == "plugin_update":
+                        if payload.approve and plugin.pending_version is not None:
+                            plugin.version = plugin.pending_version
+                        plugin.pending_version = None
                     plugin.updated_at = datetime.now(timezone.utc).isoformat()
         elif approval.target_type == "skill":
             skill = self.store.skills.get(approval.target_id)
@@ -488,3 +497,14 @@ class KarmaService:
     def _approval_is_approved(self, approval_id: str) -> bool:
         approval = self.store.approvals.get(approval_id)
         return bool(approval and approval.status == "approved")
+
+    def _get_required_approved_plugin_approval(self, plugin: Plugin) -> ApprovalRequest:
+        if not plugin.approval_request_id:
+            raise HTTPException(status_code=403, detail="Plugin enablement requires approved request.")
+        approval = self.store.approvals.get(plugin.approval_request_id)
+        if not approval or approval.status != "approved":
+            raise HTTPException(status_code=403, detail="Plugin enablement requires approved request.")
+        return approval
+
+    def _current_actor(self) -> str:
+        return "owner"
