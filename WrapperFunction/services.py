@@ -268,9 +268,9 @@ class KarmaService:
             plugin.approval_request_id = approval.id
             plugin.updated_at = datetime.now(timezone.utc).isoformat()
         return approval
+
     def update_plugin_version(self, plugin_id: str, payload: PluginVersionUpdate) -> ApprovalRequest:
         plugin = self._get_plugin_or_404(plugin_id)
-        with self.store.lock:
         with self.store.lock:
             plugin.pending_version = payload.version
             plugin.updated_at = datetime.now(timezone.utc).isoformat()

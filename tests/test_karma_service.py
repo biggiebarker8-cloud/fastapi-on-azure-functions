@@ -121,16 +121,17 @@ class KarmaServiceTests(unittest.TestCase):
         with self.assertRaises(HTTPException):
             self.service.toggle_plugin(plugin.id, PluginToggleRequest(enabled=True, requested_by="owner"))
 
-        self.service.decide_approval(approval.id, ApprovalDecision(approve=True, decided_by="owner"))
+        decided = self.service.decide_approval(approval.id, ApprovalDecision(approve=True, decided_by="not-owner"))
+        self.assertEqual(decided.decided_by, "owner")
         enabled = self.service.toggle_plugin(plugin.id, PluginToggleRequest(enabled=True, requested_by="owner"))
         self.assertEqual(enabled.lifecycle_state, "enabled")
-        self.assertEqual(enabled.lifecycle_state, "enabled")
+
     def test_plugin_cannot_enable_without_approved_request(self) -> None:
         plugin = self.service.draft_plugin(
             PluginDraftCreate(
                 name="metrics-sync",
                 owner="owner",
-                owner="owner",
+                plugin_type="analytics",
                 capabilities=["read_data", "analyze_metrics"],
             )
         )
