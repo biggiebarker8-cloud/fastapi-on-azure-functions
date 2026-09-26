@@ -72,3 +72,14 @@ Calling the restore endpoint is intentionally non-idempotent: each call creates 
 For approval-gated routes, actor identity comes from the request context: when auth is disabled the service reads `X-Actor-Id`, and when auth is enabled it uses the authenticated owner context and ignores caller-supplied `requested_by` fields.
 
 These routes use an in-memory store intended as scaffolding for a future persistent backend, so data resets on restart and is not shared across scaled-out instances.
+
+## Product Hub separate project
+
+This repository now also includes a separate FastAPI project at `/product_hub` for a single-folder product catalog experience focused on iOS-friendly and sales-friendly Microsoft, Apple, Azure, browser, and extension tooling.
+
+- `GET /` renders a simple dashboard UI when the `product_hub.app` application is hosted.
+- `GET /api/products` lists catalog items and supports `platform`, `use_case`, `available_only`, and repeated `entitlement` query parameters.
+- `GET /api/products/{product_id}` returns one catalog item with subscription availability status.
+- `GET /api/summary` returns high-level counts for the current filter set.
+
+The catalog intentionally distinguishes between products that are free to use and products that require matching subscriptions, so mobile and sales workflows can show both the full portfolio and what is immediately available.
