@@ -206,8 +206,13 @@ class KarmaService:
         if not selected_version:
             raise HTTPException(status_code=404, detail="Version not found.")
         asset.metadata = dict(selected_version.metadata_snapshot)
-        summary = f"Restored to version {version}"
-        self.store.append_asset_version(asset_id, summary, metadata_snapshot=dict(asset.metadata))
+        summary = f"Restored from version {version}"
+        self.store.append_asset_version(
+            asset_id,
+            summary,
+            metadata_snapshot=dict(asset.metadata),
+            source_version=version,
+        )
         return self.store.assets[asset_id]
 
     def _add_asset(

@@ -34,7 +34,13 @@ class InMemoryStore:
         self.assets[asset.id] = asset
         return asset
 
-    def append_asset_version(self, asset_id: str, summary: str, metadata_snapshot: dict | None = None) -> Asset:
+    def append_asset_version(
+        self,
+        asset_id: str,
+        summary: str,
+        metadata_snapshot: dict | None = None,
+        source_version: int | None = None,
+    ) -> Asset:
         asset = self.assets[asset_id]
         new_version = asset.current_version + 1
         asset.versions.append(
@@ -42,6 +48,7 @@ class InMemoryStore:
                 version=new_version,
                 content_summary=summary,
                 metadata_snapshot=metadata_snapshot if metadata_snapshot is not None else dict(asset.metadata),
+                source_version=source_version,
             )
         )
         asset.current_version = new_version
