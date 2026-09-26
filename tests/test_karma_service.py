@@ -1,5 +1,7 @@
 import unittest
 
+from pydantic import ValidationError
+
 from WrapperFunction.models import AssistantIdentity, ImageEditRequest, MerchDesignCreate, UniverseCreate
 from WrapperFunction.services import KarmaService
 from WrapperFunction.storage import InMemoryStore
@@ -78,6 +80,15 @@ class KarmaServiceTests(unittest.TestCase):
         self.assertEqual(restored_asset.current_version, 3)
         self.assertEqual(restored_asset.versions[-1].restored_from_version, 1)
         self.assertEqual(restored_asset.versions[-1].reference_id_snapshot, original_reference)
+
+    def test_tshirt_sleeve_print_area_is_rejected(self) -> None:
+        with self.assertRaises(ValidationError):
+            MerchDesignCreate(
+                universe_id=self.universe.id,
+                product_type="tshirt",
+                print_area="sleeve",
+                theme_prompt="invalid combo",
+            )
 
 
 if __name__ == "__main__":

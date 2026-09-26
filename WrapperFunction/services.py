@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import HTTPException
@@ -30,21 +31,23 @@ class KarmaService:
         self.identity = identity
 
     def set_identity(self, name: str | None = None, tone: str | None = None, lore: str | None = None) -> AssistantIdentity:
-        if name:
-            self.identity.name = name
-        if tone:
-            self.identity.tone = tone
-        if lore is not None:
-            self.identity.lore = lore
+        with self.store.lock:
+            if name:
+                self.identity.name = name
+            if tone:
+                self.identity.tone = tone
+            if lore is not None:
+                self.identity.lore = lore
         return self.identity
 
     def update_preferences(self, payload: PreferenceUpdate) -> UserPreferenceProfile:
-        self.store.preferences.likes = payload.likes
-        self.store.preferences.dislikes = payload.dislikes
-        self.store.preferences.output_preferences = payload.output_preferences
-        self.store.preferences.thinking_profile = payload.thinking_profile
-        self.store.preferences.desired_assistant_behavior = payload.desired_assistant_behavior
-        self.store.preferences.updated_at = datetime.now(timezone.utc).isoformat()
+        with self.store.lock:
+            self.store.preferences.likes = payload.likes
+            self.store.preferences.dislikes = payload.dislikes
+            self.store.preferences.output_preferences = payload.output_preferences
+            self.store.preferences.thinking_profile = payload.thinking_profile
+            self.store.preferences.desired_assistant_behavior = payload.desired_assistant_behavior
+            self.store.preferences.updated_at = datetime.now(timezone.utc).isoformat()
         return self.store.preferences
 
     def structure_non_linear_input(self, payload: NonLinearThoughtRequest) -> StructuredThoughtResponse:

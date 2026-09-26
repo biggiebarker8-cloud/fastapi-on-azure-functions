@@ -97,9 +97,9 @@ class MerchDesignCreate(BaseModel):
 
     @model_validator(mode="after")
     def validate_print_area(self) -> "MerchDesignCreate":
-        invalid_combo = self.product_type == "tshirt" and self.print_area == "sleeve"
+        invalid_combo = self.print_area == "sleeve" and self.product_type != "hoodie"
         if invalid_combo:
-            raise ValueError("tshirt designs do not support sleeve print area.")
+            raise ValueError("Only hoodie designs support the sleeve print area.")
         return self
 
 

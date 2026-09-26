@@ -208,7 +208,7 @@ To learn more about leveraging WSGI and ASGI-compatible frameworks, see [Web fra
 
 This sample now includes additional API routes for a creative assistant profile named `Karma`:
 
-- `GET/PUT /identity` for assistant identity, tone, and lore
+- `GET/PATCH /identity` for assistant identity, tone, and lore
 - Identity includes an explicit authority rule: the user is the final decision-maker
 - `GET/PUT /preferences` for remembering user likes, dislikes, and output preferences
 - `POST /structure-thought` to transform non-linear input into a structured plan with direct feasibility feedback
