@@ -217,6 +217,6 @@ This sample now includes additional API routes for a creative assistant profile 
 - `POST/GET /stories` with continuity checks and optional crossover support
 - `POST /merch-designs` for `hoodie`/`tshirt` design workflow metadata (`hoodie`: front/back/sleeve/full, `tshirt`: front/back/full)
 - `POST /image-edits` for image-edit requests against existing assets
-- `GET /assets`, `GET /assets/{asset_id}`, and `POST /assets/{asset_id}/versions/{version}/restore` for asset version history
+- `GET /assets`, `GET /assets/{asset_id}`, and `POST /assets/{asset_id}/versions/{version}/restore` for asset payloads with embedded version history
 
 These routes use an in-memory store intended as scaffolding for a future persistent backend.

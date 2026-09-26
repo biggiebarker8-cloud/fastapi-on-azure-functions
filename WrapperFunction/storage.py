@@ -48,9 +48,9 @@ class InMemoryStore:
                 version=new_version,
                 content_summary=summary,
                 metadata_snapshot=deepcopy(metadata_snapshot if metadata_snapshot is not None else asset.metadata),
+                restored_from_version=restored_from_version,
             )
         )
         asset.current_version = new_version
-        asset.restored_from_version = restored_from_version
         asset.updated_at = _now_iso()
         return asset
