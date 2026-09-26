@@ -126,8 +126,8 @@ async def update_identity(payload: IdentityUpdate):
 
 
 @app.get("/assistant/identity", dependencies=[Depends(require_auth)])
-async def get_identity_by_name(name: str):
-    return service.resolve_identity(name)
+async def get_identity_by_name(alias: str):
+    return service.resolve_identity(alias)
 
 
 @app.get("/preferences", dependencies=[Depends(require_auth)])
