@@ -22,6 +22,12 @@ class AssistantIdentity(BaseModel):
     authority_rule: str = "User is the final decision-maker; assistant advises and executes."
 
 
+class IdentityUpdate(BaseModel):
+    name: str | None = None
+    tone: str | None = None
+    lore: str | None = None
+
+
 class UniverseCreate(BaseModel):
     name: str
     canon: str = ""
@@ -113,6 +119,7 @@ class AssetVersion(BaseModel):
     version: int
     content_summary: str
     metadata_snapshot: dict = Field(default_factory=dict)
+    reference_id_snapshot: str = ""
     restored_from_version: int | None = None
     created_at: str = Field(default_factory=_now_iso)
 

@@ -146,7 +146,7 @@ class KarmaService:
 
         summary = (
             f"{payload.product_type} design in {payload.print_area} area; "
-            f"theme='{payload.theme_prompt}', variants={payload.variants}, exports={payload.export_formats}"
+            f"variants={len(payload.variants)}, exports={payload.export_formats}"
         )
         design_reference_id = f"design_{uuid4().hex[:12]}"
         asset = self._add_asset(
@@ -171,7 +171,7 @@ class KarmaService:
         if not check.allowed:
             raise HTTPException(status_code=400, detail=check.reason)
 
-        summary = f"{payload.operation}: {payload.instructions}"
+        summary = f"{payload.operation} request for source asset {payload.source_asset_id}"
         asset = self._add_asset(
             "image_edit",
             reference_id=payload.source_asset_id,
@@ -190,12 +190,14 @@ class KarmaService:
             raise HTTPException(status_code=404, detail="Version not found.")
         selected_version = next(item for item in asset.versions if item.version == version)
         asset.metadata = deepcopy(selected_version.metadata_snapshot)
+        asset.reference_id = selected_version.reference_id_snapshot
         asset.updated_at = datetime.now(timezone.utc).isoformat()
         summary = f"Restored to version {version}"
         self.store.append_asset_version(
             asset_id,
             summary,
             metadata_snapshot=asset.metadata,
+            reference_id_snapshot=asset.reference_id,
             restored_from_version=version,
         )
         return self.store.assets[asset_id]

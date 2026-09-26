@@ -39,6 +39,7 @@ class InMemoryStore:
         asset_id: str,
         summary: str,
         metadata_snapshot: dict | None = None,
+        reference_id_snapshot: str | None = None,
         restored_from_version: int | None = None,
     ) -> Asset:
         asset = self.assets[asset_id]
@@ -48,6 +49,7 @@ class InMemoryStore:
                 version=new_version,
                 content_summary=summary,
                 metadata_snapshot=deepcopy(metadata_snapshot if metadata_snapshot is not None else asset.metadata),
+                reference_id_snapshot=reference_id_snapshot if reference_id_snapshot is not None else asset.reference_id,
                 restored_from_version=restored_from_version,
             )
         )
