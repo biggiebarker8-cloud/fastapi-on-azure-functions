@@ -83,9 +83,10 @@ class AssistantService:
         return self.identity
 
     def resolve_identity(self, name: str) -> AssistantIdentity:
-        candidates = {alias.casefold() for alias in self.identity.aliases}
-        candidates.add(self.identity.name.casefold())
-        if name.casefold() not in candidates:
+        lookup_key = self._normalize_lookup_key(name)
+        candidates = {self._normalize_lookup_key(alias) for alias in self.identity.aliases}
+        candidates.add(self._normalize_lookup_key(self.identity.name))
+        if lookup_key not in candidates:
             raise HTTPException(status_code=404, detail="Assistant identity not found.")
         return self.identity
 
@@ -529,12 +530,16 @@ class AssistantService:
             cleaned = alias.strip()
             if not cleaned:
                 continue
-            key = cleaned.casefold()
+            key = AssistantService._normalize_lookup_key(cleaned)
             if key in seen:
                 continue
             seen.add(key)
             normalized.append(cleaned)
         return normalized
+
+    @staticmethod
+    def _normalize_lookup_key(value: str) -> str:
+        return value.strip().casefold()
 
     def _get_plugin_or_404(self, plugin_id: str) -> Plugin:
         plugin = self.store.plugins.get(plugin_id)

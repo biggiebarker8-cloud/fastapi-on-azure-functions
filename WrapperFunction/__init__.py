@@ -2,7 +2,6 @@ import os
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from .actor_context import get_current_actor, reset_current_actor, set_current_actor
@@ -126,9 +125,8 @@ async def update_identity(payload: IdentityUpdate):
 
 
 @app.get("/assistant/identity/{name}", dependencies=[Depends(require_auth)])
-async def get_identity_by_name(name: str, request: Request):
-    service.resolve_identity(name)
-    return RedirectResponse(url=str(request.url_for("get_identity")), status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+async def get_identity_by_name(name: str):
+    return service.resolve_identity(name)
 
 
 @app.get("/preferences", dependencies=[Depends(require_auth)])
