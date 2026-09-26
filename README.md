@@ -4,7 +4,7 @@ This template creates an Azure Functions project with FastAPI and demonstrates h
 
 ## Running locally
 
-Install Python 3.10, the Azure Functions Core Tools, and the dependencies from `/home/runner/work/fastapi-on-azure-functions/fastapi-on-azure-functions/requirements.txt`, then start the host with the Functions Core Tools.
+Install Python 3.10, the Azure Functions Core Tools, and the dependencies from `requirements.txt`, then start the host with the Functions Core Tools.
 
 ## Testing in Azure
 

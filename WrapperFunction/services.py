@@ -334,6 +334,8 @@ class KarmaService:
 
     def update_plugin_version(self, plugin_id: str, payload: PluginVersionUpdate) -> ApprovalRequest:
         plugin = self._get_plugin_or_404(plugin_id)
+        if plugin.lifecycle_state not in {"enabled", "rolled_back"}:
+            raise HTTPException(status_code=400, detail="Plugin version updates require an already approved live or rolled-back plugin.")
         approval = self.create_approval_request(
             ApprovalRequestCreate(
                 action_type="plugin_update",
@@ -410,7 +412,8 @@ class KarmaService:
             if not skill:
                 raise HTTPException(status_code=404, detail="Skill not found.")
             if payload.enabled and skill.external_api_access and skill.approval_request_id:
-                if not self._approval_is_approved(skill.approval_request_id):
+                approval = self.store.approvals.get(skill.approval_request_id)
+                if not approval or approval.status != "approved":
                     raise HTTPException(status_code=403, detail="Skill enablement requires approved external access.")
             skill.enabled = payload.enabled
             skill.updated_at = datetime.now(timezone.utc).isoformat()
@@ -448,7 +451,9 @@ class KarmaService:
                     elif approval.action_type == "plugin_update":
                         if payload.approve and plugin.pending_version is not None:
                             plugin.version = plugin.pending_version
-                        plugin.lifecycle_state = plugin.pre_approval_lifecycle_state or plugin.lifecycle_state
+                            plugin.lifecycle_state = "enabled"
+                        else:
+                            plugin.lifecycle_state = plugin.pre_approval_lifecycle_state or plugin.lifecycle_state
                         plugin.pending_version = None
                         plugin.approval_request_id = (
                             approval.id

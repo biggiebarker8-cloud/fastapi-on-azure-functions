@@ -157,6 +157,23 @@ class KarmaServiceTests(unittest.TestCase):
 
         self.assertEqual(context.exception.status_code, 403)
 
+    def test_plugin_version_update_requires_live_or_rolled_back_state(self) -> None:
+        plugin = self.service.draft_plugin(
+            PluginDraftCreate(
+                name="shop-sync",
+                owner="owner",
+                plugin_type="integration",
+                capabilities=["read_data", "run_workflow"],
+            )
+        )
+        self.service.validate_plugin(plugin.id)
+        self.service.stage_plugin(plugin.id)
+
+        with self.assertRaises(HTTPException) as context:
+            self.service.update_plugin_version(plugin.id, PluginVersionUpdate(version="0.2.0"))
+
+        self.assertEqual(context.exception.status_code, 400)
+
     def test_rejected_plugin_update_preserves_live_version_and_state(self) -> None:
         plugin = self.service.draft_plugin(
             PluginDraftCreate(
