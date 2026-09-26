@@ -77,6 +77,7 @@ app = fastapi.FastAPI()
 async def index():
     return {
         "info": "Try /hello/Shivani for parameterized route.",
+        "assistant": "Karma",
     }
 
 
@@ -126,6 +127,8 @@ Functions:
     ```
     http://localhost:7071/sample
     http://localhost:7071/hello/YourName
+    http://localhost:7071/assistant/identity/Karma
+    http://localhost:7071/assistant/identity/Alliance%20Bot
     ```
 
 ### Environment, Auth, and CORS configuration
@@ -136,12 +139,14 @@ The function app supports environment-driven behavior using these app settings:
 - `APP_NAME` (default: `fastapi-on-azure-functions`)
 - `AUTH_ENABLED` (`true`/`false`, default: `false`)
 - `AUTH_BEARER_TOKEN` (required when `AUTH_ENABLED=true`)
+- `BOT_NAME` (default: `Karma`)
+- `BOT_ALIASES` (comma-separated, default: `Karma,Alliance Bot`)
 - `CORS_ALLOW_ORIGINS` (comma-separated, default: `*`)
 - `CORS_ALLOW_CREDENTIALS` (`true`/`false`, default: `false`)
 - `CORS_ALLOW_METHODS` (comma-separated, default: `*`)
 - `CORS_ALLOW_HEADERS` (comma-separated, default: `*`)
 
-When auth is enabled, requests to `/sample` and `/hello/{name}` must include an `Authorization` header with the configured bearer token.
+When auth is enabled, requests to `/sample`, `/hello/{name}`, and `/assistant/identity/{name}` must include an `Authorization` header with the configured bearer token.
 
 ### Production Azure infrastructure defaults
 
@@ -182,6 +187,7 @@ After deployment, test these different paths on the deployed URL:
 ```
 http://<FunctionAppName>.azurewebsites.net/sample
 http://<FunctionAppName>.azurewebsites.net/hello/Foo
+http://<FunctionAppName>.azurewebsites.net/assistant/identity/Alliance%20Bot
 ```
 You can call the URL endpoints using your browser (GET requests) or one one of these HTTP test tools:
 

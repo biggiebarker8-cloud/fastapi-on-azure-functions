@@ -14,10 +14,20 @@ def _get_list_env(name: str, default: str) -> list[str]:
     return [item.strip() for item in raw_value.split(",") if item.strip()]
 
 
+def _normalize_bot_name(value: str) -> str:
+    return "".join(char for char in value.lower() if char.isalnum())
+
+
 APP_ENV = os.getenv("APP_ENV", "development")
 APP_NAME = os.getenv("APP_NAME", "fastapi-on-azure-functions")
 AUTH_ENABLED = _get_bool_env("AUTH_ENABLED", False)
 AUTH_BEARER_TOKEN = os.getenv("AUTH_BEARER_TOKEN", "")
+BOT_NAME = os.getenv("BOT_NAME", "Karma").strip() or "Karma"
+BOT_ALIASES = _get_list_env("BOT_ALIASES", "Karma,Alliance Bot")
+BOT_NAME_INDEX = {
+    _normalize_bot_name(BOT_NAME): BOT_NAME,
+    **{_normalize_bot_name(alias): BOT_NAME for alias in BOT_ALIASES},
+}
 
 ALLOWED_ORIGINS = _get_list_env("CORS_ALLOW_ORIGINS", "*")
 ALLOW_CREDENTIALS = _get_bool_env("CORS_ALLOW_CREDENTIALS", False)
@@ -53,9 +63,20 @@ async def require_auth(credentials: HTTPAuthorizationCredentials | None = Depend
 
 @app.get("/sample", dependencies=[Depends(require_auth)])
 async def index():
-    return {"info": "Try /hello/Shivani for parameterized route.", "environment": APP_ENV}
+    return {
+        "info": "Try /hello/Shivani for parameterized route.",
+        "environment": APP_ENV,
+        "assistant": BOT_NAME,
+    }
 
 
 @app.get("/hello/{name}", dependencies=[Depends(require_auth)])
 async def get_name(name: str):
     return {"name": name}
+
+
+@app.get("/assistant/identity/{name}", dependencies=[Depends(require_auth)])
+async def assistant_identity(name: str):
+    normalized_name = _normalize_bot_name(name)
+    resolved_name = BOT_NAME_INDEX.get(normalized_name, BOT_NAME)
+    return {"input": name, "assistant": resolved_name, "canonical": BOT_NAME}
