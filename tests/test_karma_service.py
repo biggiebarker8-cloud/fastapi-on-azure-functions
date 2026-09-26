@@ -176,6 +176,11 @@ class KarmaServiceTests(unittest.TestCase):
         self.assertIsNone(updated_plugin.pending_version)
         self.assertEqual(updated_plugin.lifecycle_state, "enabled")
 
+        disabled = self.service.toggle_plugin(plugin.id, PluginToggleRequest(enabled=False, requested_by="owner"))
+        self.assertEqual(disabled.lifecycle_state, "disabled")
+        reenabled = self.service.toggle_plugin(plugin.id, PluginToggleRequest(enabled=True, requested_by="owner"))
+        self.assertEqual(reenabled.lifecycle_state, "enabled")
+
     def test_skill_external_access_requires_approval(self) -> None:
         skill = self.service.create_skill(
             SkillCreate(

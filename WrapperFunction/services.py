@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from fastapi import HTTPException
 
+from .actor_context import get_current_actor
 from .models import (
     ApprovalDecision,
     ApprovalRequest,
@@ -272,11 +273,6 @@ class KarmaService:
 
     def update_plugin_version(self, plugin_id: str, payload: PluginVersionUpdate) -> ApprovalRequest:
         plugin = self._get_plugin_or_404(plugin_id)
-        with self.store.lock:
-            plugin.pending_version = payload.version
-            plugin.pre_approval_lifecycle_state = plugin.lifecycle_state
-            plugin.lifecycle_state = "pending_approval"
-            plugin.updated_at = datetime.now(timezone.utc).isoformat()
         approval = self.create_approval_request(
             ApprovalRequestCreate(
                 action_type="plugin_update",
@@ -288,7 +284,11 @@ class KarmaService:
             )
         )
         with self.store.lock:
+            plugin.pending_version = payload.version
+            plugin.pre_approval_lifecycle_state = plugin.lifecycle_state
+            plugin.lifecycle_state = "pending_approval"
             plugin.approval_request_id = approval.id
+            plugin.updated_at = datetime.now(timezone.utc).isoformat()
         return approval
 
     def toggle_plugin(self, plugin_id: str, payload: PluginToggleRequest) -> Plugin:
@@ -383,11 +383,20 @@ class KarmaService:
                 with self.store.lock:
                     if approval.action_type == "plugin_publish":
                         plugin.lifecycle_state = "enabled" if payload.approve else (plugin.pre_approval_lifecycle_state or "staged")
+                        plugin.pending_version = None
+                        plugin.approval_request_id = approval.id if payload.approve else self._latest_approved_plugin_approval_id(
+                            plugin.id,
+                            exclude_approval_id=approval.id,
+                        )
                     elif approval.action_type == "plugin_update":
                         if payload.approve and plugin.pending_version is not None:
                             plugin.version = plugin.pending_version
                         plugin.lifecycle_state = plugin.pre_approval_lifecycle_state or plugin.lifecycle_state
                         plugin.pending_version = None
+                        plugin.approval_request_id = approval.id if payload.approve else self._latest_approved_plugin_approval_id(
+                            plugin.id,
+                            exclude_approval_id=approval.id,
+                        )
                     plugin.pre_approval_lifecycle_state = None
                     plugin.updated_at = datetime.now(timezone.utc).isoformat()
         elif approval.target_type == "skill":
@@ -504,17 +513,34 @@ class KarmaService:
         return bool(approval and approval.status == "approved")
 
     def _get_required_approved_plugin_approval(self, plugin: Plugin) -> ApprovalRequest:
-        if not plugin.approval_request_id:
-            raise HTTPException(status_code=403, detail="Plugin enablement requires approved request.")
-        approval = self.store.approvals.get(plugin.approval_request_id)
-        if (
-            not approval
-            or approval.status != "approved"
-            or approval.target_type != "plugin"
-            or approval.target_id != plugin.id
-        ):
+        approval = None
+        if plugin.approval_request_id:
+            candidate = self.store.approvals.get(plugin.approval_request_id)
+            if (
+                candidate
+                and candidate.status == "approved"
+                and candidate.target_type == "plugin"
+                and candidate.target_id == plugin.id
+            ):
+                approval = candidate
+        if approval is None:
+            latest_approval_id = self._latest_approved_plugin_approval_id(plugin.id)
+            approval = self.store.approvals.get(latest_approval_id) if latest_approval_id else None
+        if approval is None:
             raise HTTPException(status_code=403, detail="Plugin enablement requires approved request.")
         return approval
 
     def _current_actor(self) -> str:
-        return "owner"
+        return get_current_actor()
+
+    def _latest_approved_plugin_approval_id(self, plugin_id: str, exclude_approval_id: str | None = None) -> str | None:
+        latest_approval_id: str | None = None
+        for approval in self.store.approvals.values():
+            if approval.id == exclude_approval_id:
+                continue
+            if approval.status != "approved":
+                continue
+            if approval.target_type != "plugin" or approval.target_id != plugin_id:
+                continue
+            latest_approval_id = approval.id
+        return latest_approval_id

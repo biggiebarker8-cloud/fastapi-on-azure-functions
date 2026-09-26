@@ -1,9 +1,10 @@
 import os
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from .actor_context import reset_current_actor, set_current_actor
 from .config import ASSISTANT_AUTHORITY_RULE, ASSISTANT_NAME, ASSISTANT_STYLE
 from .models import (
     ApprovalDecision,
@@ -72,9 +73,18 @@ app.add_middleware(
 )
 
 
-async def require_auth(credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme)):
+async def require_auth(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+):
     if not AUTH_ENABLED:
+        token = set_current_actor(request.headers.get("X-Actor-Id", "owner"))
+        try:
+            yield
+        finally:
+            reset_current_actor(token)
         return
+
     if not AUTH_BEARER_TOKEN:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -85,6 +95,12 @@ async def require_auth(credentials: HTTPAuthorizationCredentials | None = Depend
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing bearer token.",
         )
+
+    token = set_current_actor(request.headers.get("X-Actor-Id", "owner"))
+    try:
+        yield
+    finally:
+        reset_current_actor(token)
 
 
 @app.get("/sample", dependencies=[Depends(require_auth)])
