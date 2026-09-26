@@ -535,6 +535,7 @@ class KarmaService:
 
     def _latest_approved_plugin_approval_id(self, plugin_id: str, exclude_approval_id: str | None = None) -> str | None:
         latest_approval_id: str | None = None
+        latest_approval_sort_key = ""
         for approval in self.store.approvals.values():
             if approval.id == exclude_approval_id:
                 continue
@@ -542,5 +543,8 @@ class KarmaService:
                 continue
             if approval.target_type != "plugin" or approval.target_id != plugin_id:
                 continue
-            latest_approval_id = approval.id
+            sort_key = approval.decided_at or approval.created_at
+            if sort_key >= latest_approval_sort_key:
+                latest_approval_id = approval.id
+                latest_approval_sort_key = sort_key
         return latest_approval_id

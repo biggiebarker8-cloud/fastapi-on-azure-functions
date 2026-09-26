@@ -175,6 +175,7 @@ class KarmaServiceTests(unittest.TestCase):
         self.assertEqual(updated_plugin.version, "0.1.0")
         self.assertIsNone(updated_plugin.pending_version)
         self.assertEqual(updated_plugin.lifecycle_state, "enabled")
+        self.assertEqual(updated_plugin.approval_request_id, publish_approval.id)
 
         disabled = self.service.toggle_plugin(plugin.id, PluginToggleRequest(enabled=False, requested_by="owner"))
         self.assertEqual(disabled.lifecycle_state, "disabled")
