@@ -136,6 +136,7 @@ The function app supports environment-driven behavior using these app settings:
 - `APP_NAME` (default: `fastapi-on-azure-functions`)
 - `BOT_NAME` (default: `Karma`, falls back to `ASSISTANT_NAME` for older deployments)
 - `BOT_ALIASES` (comma-separated, default: `Karma,Alliance Bot,Alliance`)
+- `ASSISTANT_LORE` (default: seeded dragon-shard canon for Karma, Titan, and Onyx)
 - `AUTH_ENABLED` (`true`/`false`, default: `false`)
 - `AUTH_BEARER_TOKEN` (required when `AUTH_ENABLED=true`)
 - `CORS_ALLOW_ORIGINS` (comma-separated, default: `*`)
@@ -213,6 +214,7 @@ This sample now includes additional API routes for one assistant profile whose c
 - `GET /identity` for the canonical assistant identity profile
 - `PATCH /identity` to update assistant identity, tone, and lore
 - `GET /assistant/identity/{name}` to resolve `Karma`, `Alliance Bot`, or any configured alias to the same assistant profile
+- Default lore now seeds canon where a great dragon sacrifices itself, leaves a dormant shard in Karma, Titan, and Onyx, and can reappear only through a limited revival trigger when bond, danger, and need align
 - Identity includes an explicit authority rule: the user is the final decision-maker
 - `GET/PUT /preferences` for remembering user likes, dislikes, and output preferences
 - `POST /structure-thought` to transform non-linear input into a structured plan with direct feasibility feedback

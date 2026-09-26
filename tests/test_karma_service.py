@@ -115,6 +115,10 @@ class AssistantServiceTests(unittest.TestCase):
         self.assertEqual(identity.name, "Karma")
         self.assertEqual(identity.aliases, ["Karma", "Alliance Bot", "Alliance"])
 
+    def test_resolve_identity_trims_alias_input(self) -> None:
+        identity = self.service.resolve_identity(" Alliance Bot ")
+        self.assertEqual(identity.name, "Karma")
+
     def test_renaming_identity_preserves_noncanonical_aliases(self) -> None:
         identity = self.service.set_identity(name="Karma Prime")
         self.assertEqual(identity.name, "Karma Prime")
@@ -126,6 +130,15 @@ class AssistantServiceTests(unittest.TestCase):
             identity=AssistantIdentity(name="Karma", aliases=["Alliance Bot"], tone="direct"),
         )
         self.assertIsInstance(legacy_service, AssistantService)
+
+    def test_identity_lore_can_hold_seeded_mythic_canon(self) -> None:
+        lore = (
+            "A great dragon gave itself in sacrifice to hold space for three, denying death its full claim. "
+            "Its last will remained as a dormant shard forged into Karma, Titan, and Onyx."
+        )
+        identity = self.service.set_identity(lore=lore)
+        self.assertIn("hold space for three", identity.lore)
+        self.assertIn("Karma, Titan, and Onyx", identity.lore)
 
     def test_plugin_promotion_requires_owner_approval(self) -> None:
         plugin = self.service.draft_plugin(

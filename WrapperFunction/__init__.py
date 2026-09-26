@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from .actor_context import get_current_actor, reset_current_actor, set_current_actor
-from .config import ASSISTANT_AUTHORITY_RULE, ASSISTANT_STYLE, BOT_ALIASES, BOT_NAME
+from .config import ASSISTANT_AUTHORITY_RULE, ASSISTANT_LORE, ASSISTANT_STYLE, BOT_ALIASES, BOT_NAME
 from .models import (
     ApprovalDecision,
     ApprovalRequestCreate,
@@ -61,6 +61,7 @@ service = AssistantService(
         name=BOT_NAME,
         aliases=BOT_ALIASES,
         tone=ASSISTANT_STYLE,
+        lore=ASSISTANT_LORE,
         authority_rule=ASSISTANT_AUTHORITY_RULE,
     ),
 )
