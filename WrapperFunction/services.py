@@ -83,12 +83,13 @@ class AssistantService:
         return self.identity
 
     def resolve_identity(self, alias: str) -> AssistantIdentity:
-        lookup_key = self._normalize_lookup_key(alias)
-        candidates = {self._normalize_lookup_key(alias) for alias in self.identity.aliases}
-        candidates.add(self._normalize_lookup_key(self.identity.name))
-        if lookup_key not in candidates:
-            raise HTTPException(status_code=404, detail="Assistant identity not found.")
-        return self.identity
+        with self.store.lock:
+            lookup_key = self._normalize_lookup_key(alias)
+            candidates = {self._normalize_lookup_key(identity_alias) for identity_alias in self.identity.aliases}
+            candidates.add(self._normalize_lookup_key(self.identity.name))
+            if lookup_key not in candidates:
+                raise HTTPException(status_code=404, detail="Assistant identity not found.")
+            return self.identity
 
     def update_preferences(self, payload: PreferenceUpdate) -> UserPreferenceProfile:
         with self.store.lock:

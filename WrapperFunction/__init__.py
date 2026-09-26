@@ -120,8 +120,13 @@ async def get_identity():
     return service.identity
 
 
-@app.get("/identity/resolve", dependencies=[Depends(require_auth)])
-async def resolve_identity(alias: str):
+@app.get(
+    "/identity/resolve",
+    dependencies=[Depends(require_auth)],
+    summary="Resolve assistant identity alias",
+    description="Returns the canonical assistant identity when the supplied alias matches the configured name or aliases.",
+)
+async def resolve_identity(alias: str) -> AssistantIdentity:
     return service.resolve_identity(alias)
 
 
