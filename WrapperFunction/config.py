@@ -5,9 +5,14 @@ def _split_aliases(raw_value: str) -> list[str]:
     return [item.strip() for item in raw_value.split(",") if item.strip()]
 
 
-BOT_NAME = os.getenv("BOT_NAME", os.getenv("ASSISTANT_NAME", "Karma"))
+LEGACY_ASSISTANT_NAME = os.getenv("ASSISTANT_NAME")
+BOT_NAME = os.getenv("BOT_NAME", LEGACY_ASSISTANT_NAME or "Karma")
+DEFAULT_BOT_ALIASES = [BOT_NAME]
+if LEGACY_ASSISTANT_NAME and LEGACY_ASSISTANT_NAME.casefold() != BOT_NAME.casefold():
+    DEFAULT_BOT_ALIASES.append(LEGACY_ASSISTANT_NAME)
+DEFAULT_BOT_ALIASES.extend(["Alliance Bot", "Alliance"])
 BOT_ALIASES = _split_aliases(
-    os.getenv("BOT_ALIASES", os.getenv("ASSISTANT_ALIASES", f"{BOT_NAME},Alliance Bot,Alliance"))
+    os.getenv("BOT_ALIASES", os.getenv("ASSISTANT_ALIASES", ",".join(DEFAULT_BOT_ALIASES)))
 )
 ASSISTANT_STYLE = os.getenv(
     "ASSISTANT_STYLE",

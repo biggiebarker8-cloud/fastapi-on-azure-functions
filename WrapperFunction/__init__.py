@@ -125,7 +125,7 @@ async def update_identity(payload: IdentityUpdate):
     return service.set_identity(**payload.model_dump(exclude_unset=True))
 
 
-@app.get("/assistant/identity/{name}", dependencies=[Depends(require_auth)])
+@app.get("/assistant/identity", dependencies=[Depends(require_auth)])
 async def get_identity_by_name(name: str):
     return service.resolve_identity(name)
 
