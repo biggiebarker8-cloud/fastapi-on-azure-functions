@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from datetime import datetime, timezone
 
 from .models import Asset, AssetVersion, Character, Story, Universe, UserPreferenceProfile
@@ -33,10 +34,16 @@ class InMemoryStore:
         self.assets[asset.id] = asset
         return asset
 
-    def append_asset_version(self, asset_id: str, summary: str) -> Asset:
+    def append_asset_version(self, asset_id: str, summary: str, metadata_snapshot: dict | None = None) -> Asset:
         asset = self.assets[asset_id]
         new_version = asset.current_version + 1
-        asset.versions.append(AssetVersion(version=new_version, content_summary=summary))
+        asset.versions.append(
+            AssetVersion(
+                version=new_version,
+                content_summary=summary,
+                metadata_snapshot=deepcopy(metadata_snapshot if metadata_snapshot is not None else asset.metadata),
+            )
+        )
         asset.current_version = new_version
         asset.updated_at = _now_iso()
         return asset

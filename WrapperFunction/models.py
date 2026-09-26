@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Literal, Optional
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 def _now_iso() -> str:
@@ -89,6 +89,13 @@ class MerchDesignCreate(BaseModel):
     variants: list[str] = Field(default_factory=list)
     export_formats: list[str] = Field(default_factory=lambda: ["png"])
 
+    @model_validator(mode="after")
+    def validate_print_area(self) -> "MerchDesignCreate":
+        invalid_combo = self.product_type == "tshirt" and self.print_area == "sleeve"
+        if invalid_combo:
+            raise ValueError("tshirt designs do not support sleeve print area.")
+        return self
+
 
 class ImageEditRequest(BaseModel):
     universe_id: str
@@ -105,6 +112,7 @@ class ImageEditRequest(BaseModel):
 class AssetVersion(BaseModel):
     version: int
     content_summary: str
+    metadata_snapshot: dict = Field(default_factory=dict)
     created_at: str = Field(default_factory=_now_iso)
 
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
@@ -142,16 +143,6 @@ class KarmaService:
         if not check.allowed:
             raise HTTPException(status_code=400, detail=check.reason)
 
-        print_constraints = {
-            "hoodie": ["front", "back", "sleeve", "full"],
-            "tshirt": ["front", "back", "full"],
-        }
-        if payload.print_area not in print_constraints[payload.product_type]:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid print area for {payload.product_type}.",
-            )
-
         summary = (
             f"{payload.product_type} design in {payload.print_area} area; "
             f"theme='{payload.theme_prompt}', variants={payload.variants}, exports={payload.export_formats}"
@@ -195,8 +186,10 @@ class KarmaService:
         available_versions = {item.version for item in asset.versions}
         if version not in available_versions:
             raise HTTPException(status_code=404, detail="Version not found.")
+        selected_version = next(item for item in asset.versions if item.version == version)
+        asset.metadata = deepcopy(selected_version.metadata_snapshot)
         summary = f"Restored to version {version}"
-        self.store.append_asset_version(asset_id, summary)
+        self.store.append_asset_version(asset_id, summary, metadata_snapshot=asset.metadata)
         return self.store.assets[asset_id]
 
     def _add_asset(self, asset_type: str, reference_id: str, universe_id: str, metadata: dict) -> Asset:
