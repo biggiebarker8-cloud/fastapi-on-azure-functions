@@ -215,6 +215,7 @@ class KarmaService:
                 asset_id,
                 f"Checkpoint before restore to version {version}",
                 metadata_snapshot=dict(asset.metadata),
+                reference_id_snapshot=asset.reference_id,
                 source_version=current_version_before_restore,
             )
             asset.metadata = dict(selected_version.metadata_snapshot)
@@ -225,6 +226,7 @@ class KarmaService:
                 asset_id,
                 summary,
                 metadata_snapshot=dict(asset.metadata),
+                reference_id_snapshot=asset.reference_id,
                 source_version=version,
             )
             return self.store.assets[asset_id]

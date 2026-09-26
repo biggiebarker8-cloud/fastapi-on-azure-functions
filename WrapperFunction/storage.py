@@ -45,6 +45,7 @@ class InMemoryStore:
         asset_id: str,
         summary: str,
         metadata_snapshot: dict | None = None,
+        reference_id_snapshot: str | None = None,
         source_version: int | None = None,
     ) -> Asset:
         with self.lock:
@@ -55,7 +56,7 @@ class InMemoryStore:
                     version=new_version,
                     content_summary=summary,
                     metadata_snapshot=metadata_snapshot if metadata_snapshot is not None else dict(asset.metadata),
-                    reference_id_snapshot=asset.reference_id,
+                    reference_id_snapshot=reference_id_snapshot if reference_id_snapshot is not None else asset.reference_id,
                     source_version=source_version,
                 )
             )
