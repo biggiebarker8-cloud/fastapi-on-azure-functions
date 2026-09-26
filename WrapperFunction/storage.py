@@ -55,6 +55,7 @@ class InMemoryStore:
                     version=new_version,
                     content_summary=summary,
                     metadata_snapshot=metadata_snapshot if metadata_snapshot is not None else dict(asset.metadata),
+                    reference_id_snapshot=asset.reference_id,
                     source_version=source_version,
                 )
             )

@@ -122,6 +122,7 @@ class AssetVersion(BaseModel):
     version: int
     content_summary: str
     metadata_snapshot: dict = Field(default_factory=dict)
+    reference_id_snapshot: str | None = None
     source_version: int | None = None
     created_at: str = Field(default_factory=_now_iso)
 

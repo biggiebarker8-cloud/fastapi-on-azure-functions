@@ -57,6 +57,67 @@ class KarmaApiRouteTests(unittest.TestCase):
         self.assertEqual(len(filtered_items), 1)
         self.assertEqual(filtered_items[0]["universe_id"], u1["id"])
 
+    def test_story_crossover_route_failure_and_success(self):
+        wf.AUTH_ENABLED = False
+
+        u1 = self.client.post("/universes", json={"name": "u1"}).json()
+        u2 = self.client.post("/universes", json={"name": "u2"}).json()
+        character = self.client.post("/characters", json={"universe_id": u2["id"], "name": "guest"}).json()
+
+        failure = self.client.post(
+            "/stories",
+            json={
+                "universe_id": u1["id"],
+                "title": "bad",
+                "arc": "arc",
+                "character_ids": [character["id"]],
+            },
+        )
+        self.assertEqual(failure.status_code, 400)
+
+        success = self.client.post(
+            "/stories",
+            json={
+                "universe_id": u1["id"],
+                "title": "ok",
+                "arc": "arc",
+                "character_ids": [character["id"]],
+                "allow_crossover": True,
+                "crossover_universe_ids": [u2["id"]],
+            },
+        )
+        self.assertEqual(success.status_code, 200)
+        self.assertTrue(success.json()["continuity_notes"])
+
+    def test_restore_asset_route_restores_prior_metadata(self):
+        wf.AUTH_ENABLED = False
+
+        universe = self.client.post("/universes", json={"name": "u1"}).json()
+        asset = self.client.post(
+            "/merch-designs",
+            json={
+                "universe_id": universe["id"],
+                "product_type": "hoodie",
+                "theme_prompt": "v1",
+                "print_area": "front",
+            },
+        ).json()
+
+        with wf.store.lock:
+            wf.store.assets[asset["id"]].metadata["theme_prompt"] = "v2"
+            wf.store.append_asset_version(
+                asset["id"],
+                "updated",
+                metadata_snapshot=dict(wf.store.assets[asset["id"]].metadata),
+            )
+
+        restored = self.client.post(f"/assets/{asset['id']}/versions/1/restore")
+
+        self.assertEqual(restored.status_code, 200)
+        body = restored.json()
+        self.assertEqual(body["metadata"]["theme_prompt"], "v1")
+        self.assertEqual(body["versions"][-1]["source_version"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
