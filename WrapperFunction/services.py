@@ -192,7 +192,12 @@ class KarmaService:
         asset.metadata = deepcopy(selected_version.metadata_snapshot)
         asset.updated_at = datetime.now(timezone.utc).isoformat()
         summary = f"Restored to version {version}"
-        self.store.append_asset_version(asset_id, summary, metadata_snapshot=asset.metadata)
+        self.store.append_asset_version(
+            asset_id,
+            summary,
+            metadata_snapshot=asset.metadata,
+            restored_from_version=version,
+        )
         return self.store.assets[asset_id]
 
     def _add_asset(self, asset_type: str, reference_id: str, universe_id: str, metadata: dict) -> Asset:

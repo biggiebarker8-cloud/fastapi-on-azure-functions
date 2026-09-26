@@ -124,6 +124,7 @@ class Asset(BaseModel):
     metadata: dict = Field(default_factory=dict)
     versions: list[AssetVersion] = Field(default_factory=list)
     current_version: int = 0
+    restored_from_version: int | None = None
     created_at: str = Field(default_factory=_now_iso)
     updated_at: str = Field(default_factory=_now_iso)
 
