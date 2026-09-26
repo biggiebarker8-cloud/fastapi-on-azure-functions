@@ -16,6 +16,11 @@ class KarmaApiRouteTests(unittest.TestCase):
             wf.store.characters.clear()
             wf.store.stories.clear()
             wf.store.assets.clear()
+            wf.store.plugins.clear()
+            wf.store.skills.clear()
+            wf.store.approvals.clear()
+            wf.store.learning_events.clear()
+            wf.store.playbooks.clear()
 
     def tearDown(self):
         wf.AUTH_ENABLED = self.original_auth_enabled
@@ -52,6 +57,24 @@ class KarmaApiRouteTests(unittest.TestCase):
         self.assertEqual(body["name"], original["name"])
         self.assertEqual(body["tone"], original["tone"])
         self.assertEqual(body["lore"], "new lore")
+
+    def test_owner_approval_routes_use_request_actor_context(self):
+        wf.AUTH_ENABLED = False
+
+        response = self.client.post(
+            "/approvals",
+            headers={"X-Actor-Id": "reviewer-1"},
+            json={
+                "action_type": "learning_rule_change",
+                "target_type": "learning_policy",
+                "target_id": "learning_policy",
+                "requested_by": "spoofed",
+                "required_owner_approval": True,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["requested_by"], "reviewer-1")
 
     def test_knowledge_base_routes_return_seeded_entries(self):
         wf.AUTH_ENABLED = False
