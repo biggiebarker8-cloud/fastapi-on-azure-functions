@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 import WrapperFunction as wf
 
 
-class KarmaApiRouteTests(unittest.TestCase):
+class AssistantApiRouteTests(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(wf.app)
         self.original_auth_enabled = wf.AUTH_ENABLED

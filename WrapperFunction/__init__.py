@@ -29,7 +29,7 @@ from .models import (
     StoryCreate,
     UniverseCreate,
 )
-from .services import KarmaService
+from .services import AssistantService
 from .storage import InMemoryStore
 
 
@@ -56,7 +56,7 @@ app = FastAPI(title=APP_NAME)
 bearer_scheme = HTTPBearer(auto_error=False)
 
 store = InMemoryStore()
-service = KarmaService(
+service = AssistantService(
     store=store,
     identity=AssistantIdentity(
         name=ASSISTANT_NAME,

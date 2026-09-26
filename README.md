@@ -36,9 +36,9 @@ Now you have a simple Azure Function App using the FastAPI framework, and you ca
 
 To learn more about leveraging WSGI and ASGI-compatible frameworks, see [Web frameworks](https://docs.microsoft.com/azure/azure-functions/functions-reference-python?tabs=asgi%2Cazurecli-linux%2Capplication-level#web-frameworks).
 
-## Karma creative API extensions
+## Assistant API extensions
 
-This sample now includes additional API routes for a creative assistant profile named `Karma`:
+This sample now includes additional API routes for a creative assistant profile. By default the assistant name is `Karma`, and you can override it with `ASSISTANT_NAME`:
 
 - When `AUTH_ENABLED=true`, these routes require an `Authorization` header containing the configured token value.
 - `GET/PATCH /identity` for assistant identity, tone, and lore

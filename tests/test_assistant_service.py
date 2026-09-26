@@ -19,15 +19,15 @@ from WrapperFunction.models import (
     SkillToggleRequest,
     UniverseCreate,
 )
-from WrapperFunction.services import KarmaService
+from WrapperFunction.services import AssistantService
 from WrapperFunction.storage import InMemoryStore
 
 
-class KarmaServiceTests(unittest.TestCase):
+class AssistantServiceTests(unittest.TestCase):
     def setUp(self) -> None:
         self.actor_token = set_current_actor("owner")
         self.store = InMemoryStore()
-        self.service = KarmaService(
+        self.service = AssistantService(
             store=self.store,
             identity=AssistantIdentity(name="Karma", tone="direct"),
         )

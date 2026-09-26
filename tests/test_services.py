@@ -11,14 +11,14 @@ from WrapperFunction.models import (
     StoryCreate,
     UniverseCreate,
 )
-from WrapperFunction.services import KarmaService
+from WrapperFunction.services import AssistantService
 from WrapperFunction.storage import InMemoryStore
 
 
-class KarmaServiceTests(unittest.TestCase):
+class AssistantServiceTests(unittest.TestCase):
     def setUp(self):
         self.store = InMemoryStore()
-        self.service = KarmaService(
+        self.service = AssistantService(
             store=self.store,
             identity=AssistantIdentity(
                 name="Karma",

@@ -52,7 +52,7 @@ ALLOWED_PLUGIN_CAPABILITIES = {
 }
 
 
-class KarmaService:
+class AssistantService:
     def __init__(self, store: InMemoryStore, identity: AssistantIdentity) -> None:
         self.store = store
         self.identity = identity
@@ -116,7 +116,6 @@ class KarmaService:
             feasibility=feasibility,
             straight_feedback=feedback,
         )
-
     def create_universe(self, payload: UniverseCreate) -> Universe:
         check = moderate_text(f"{payload.name} {payload.canon} {payload.timeline}")
         if not check.allowed:
@@ -652,3 +651,6 @@ class KarmaService:
                 latest_approval_id = approval.id
                 latest_approval_sort_key = sort_key
         return latest_approval_id
+
+
+KarmaService = AssistantService
