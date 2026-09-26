@@ -167,7 +167,7 @@ class KarmaServiceTests(unittest.TestCase):
         self.assertEqual(update_approval.requested_by, "owner")
         self.assertEqual(updated_plugin.version, "0.1.0")
         self.assertEqual(updated_plugin.pending_version, "0.2.0")
-        self.assertEqual(updated_plugin.lifecycle_state, "enabled")
+        self.assertEqual(updated_plugin.lifecycle_state, "pending_approval")
 
         self.service.decide_approval(update_approval.id, ApprovalDecision(approve=False, decided_by="not-owner"))
 

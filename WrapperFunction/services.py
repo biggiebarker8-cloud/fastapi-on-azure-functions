@@ -264,6 +264,7 @@ class KarmaService:
             )
         )
         with self.store.lock:
+            plugin.pre_approval_lifecycle_state = plugin.lifecycle_state
             plugin.lifecycle_state = "pending_approval"
             plugin.approval_request_id = approval.id
             plugin.updated_at = datetime.now(timezone.utc).isoformat()
@@ -273,6 +274,8 @@ class KarmaService:
         plugin = self._get_plugin_or_404(plugin_id)
         with self.store.lock:
             plugin.pending_version = payload.version
+            plugin.pre_approval_lifecycle_state = plugin.lifecycle_state
+            plugin.lifecycle_state = "pending_approval"
             plugin.updated_at = datetime.now(timezone.utc).isoformat()
         approval = self.create_approval_request(
             ApprovalRequestCreate(
@@ -379,11 +382,13 @@ class KarmaService:
             if plugin:
                 with self.store.lock:
                     if approval.action_type == "plugin_publish":
-                        plugin.lifecycle_state = "enabled" if payload.approve else "staged"
+                        plugin.lifecycle_state = "enabled" if payload.approve else (plugin.pre_approval_lifecycle_state or "staged")
                     elif approval.action_type == "plugin_update":
                         if payload.approve and plugin.pending_version is not None:
                             plugin.version = plugin.pending_version
+                        plugin.lifecycle_state = plugin.pre_approval_lifecycle_state or plugin.lifecycle_state
                         plugin.pending_version = None
+                    plugin.pre_approval_lifecycle_state = None
                     plugin.updated_at = datetime.now(timezone.utc).isoformat()
         elif approval.target_type == "skill":
             skill = self.store.skills.get(approval.target_id)
@@ -502,7 +507,12 @@ class KarmaService:
         if not plugin.approval_request_id:
             raise HTTPException(status_code=403, detail="Plugin enablement requires approved request.")
         approval = self.store.approvals.get(plugin.approval_request_id)
-        if not approval or approval.status != "approved":
+        if (
+            not approval
+            or approval.status != "approved"
+            or approval.target_type != "plugin"
+            or approval.target_id != plugin.id
+        ):
             raise HTTPException(status_code=403, detail="Plugin enablement requires approved request.")
         return approval
 

@@ -210,6 +210,7 @@ class Plugin(BaseModel):
     validation_notes: list[str] = Field(default_factory=list)
     approval_request_id: str | None = None
     pending_version: str | None = None
+    pre_approval_lifecycle_state: Literal["draft", "validated", "staged", "enabled", "disabled", "rolled_back", "killed"] | None = None
     rollback_history: list[str] = Field(default_factory=list)
     secret_scope: str = ""
     created_at: str = Field(default_factory=_now_iso)
