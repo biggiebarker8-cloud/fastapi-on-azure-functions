@@ -110,7 +110,6 @@ async def get_name(name: str):
 4. If you are using VS Code for development, click the "Run and Debug" button or follow [the instructions for running a function locally](https://docs.microsoft.com/azure/azure-functions/create-first-function-vs-code-python#run-the-function-locally). Outside of VS Code, follow [these instructions for using Core Tools commands directly to run the function locally](https://docs.microsoft.com/azure/azure-functions/functions-run-local?tabs=v4%2Cwindows%2Cpython%2Cportal%2Cbash#start).
 
 5. Once the function is running, test the function at the local URL displayed in the Terminal panel:
-=======
 ```log
 Functions:
         http_app_func: [GET,POST,DELETE,HEAD,PATCH,PUT,OPTIONS] http://localhost:7071//{*route}
@@ -203,3 +202,25 @@ You can call the URL endpoints using your browser (GET requests) or one one of t
 Now you have a simple Azure Function App using the FastAPI framework, and you can continue building on it to develop more sophisticated applications.
 
 To learn more about leveraging WSGI and ASGI-compatible frameworks, see [Web frameworks](https://docs.microsoft.com/azure/azure-functions/functions-reference-python?tabs=asgi%2Cazurecli-linux%2Capplication-level#web-frameworks).
+
+## Karma creative API extensions
+
+This sample now includes additional API routes for a creative assistant profile named `Karma`:
+
+- When `AUTH_ENABLED=true`, these routes require an `Authorization` header containing the configured token value.
+
+- `GET/PUT /identity` for assistant identity, tone, and lore
+- Identity includes an explicit authority rule: the user is the final decision-maker
+- `GET/PUT /preferences` for remembering user likes, dislikes, and output preferences
+- `POST /structure-thought` to transform non-linear input into a structured plan with direct feasibility feedback
+- `POST/GET /universes` and `GET /universes/{universe_id}` for isolated lore universes
+- `POST/GET /characters` for universe-scoped character creation
+- `POST/GET /stories` with continuity checks and optional crossover support
+- `POST /merch-designs` for hoodie/t-shirt design workflow metadata
+- `POST /image-edits` for image-edit requests against existing assets
+- `GET /assets`, `GET /assets/{asset_id}`, and `POST /assets/{asset_id}/versions/{version}/restore` for asset version history
+
+Calling the restore endpoint is intentionally non-idempotent: each call creates additional version-history entries (checkpoint + restore event).
+
+Important: these routes currently use process-local in-memory state, so data resets on restart and is not shared across scaled-out instances.
+They are intended as scaffolding for a future persistent backend.
