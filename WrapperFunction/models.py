@@ -329,6 +329,7 @@ class ApprovalRequest(BaseModel):
     decision_notes: str = ""
     created_at: str = Field(default_factory=_now_iso)
     decided_at: str | None = None
+    applied_at: str | None = None
 
 
 class LearningEventCreate(BaseModel):

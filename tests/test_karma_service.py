@@ -275,6 +275,20 @@ class KarmaServiceTests(unittest.TestCase):
         )
         self.assertTrue(updated["learning_policy"].auto_approve_low_risk_tuning)
 
+    def test_learning_policy_approval_cannot_be_reused(self) -> None:
+        policy_approval = self.service.request_learning_policy_change()
+        self.service.decide_approval(policy_approval.id, ApprovalDecision(approve=True, decided_by="owner"))
+        self.service.update_learning_policy(
+            LearningPolicyUpdate(auto_approve_low_risk_tuning=True, approval_request_id=policy_approval.id)
+        )
+
+        with self.assertRaises(HTTPException) as context:
+            self.service.update_learning_policy(
+                LearningPolicyUpdate(auto_approve_low_risk_tuning=False, approval_request_id=policy_approval.id)
+            )
+
+        self.assertEqual(context.exception.status_code, 400)
+
     def test_low_risk_playbook_can_auto_activate_when_policy_enabled(self) -> None:
         policy_approval = self.service.request_learning_policy_change()
         self.service.decide_approval(policy_approval.id, ApprovalDecision(approve=True, decided_by="owner"))

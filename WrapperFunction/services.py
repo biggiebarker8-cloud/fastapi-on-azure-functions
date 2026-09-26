@@ -414,8 +414,8 @@ class KarmaService:
             skill = self.store.skills.get(skill_id)
             if not skill:
                 raise HTTPException(status_code=404, detail="Skill not found.")
-            if payload.enabled and skill.external_api_access and skill.approval_request_id:
-                approval = self.store.approvals.get(skill.approval_request_id)
+            if payload.enabled and skill.external_api_access:
+                approval = self.store.approvals.get(skill.approval_request_id) if skill.approval_request_id else None
                 if not approval or approval.status != "approved":
                     raise HTTPException(status_code=403, detail="Skill enablement requires approved external access.")
             skill.enabled = payload.enabled
@@ -558,10 +558,14 @@ class KarmaService:
             or approval.action_type != "learning_rule_change"
         ):
             raise HTTPException(status_code=400, detail="Approval request does not apply to learning policy.")
+        if approval.applied_at is not None:
+            raise HTTPException(status_code=400, detail="Approval request has already been applied.")
 
         with self.store.lock:
+            applied_at = datetime.now(timezone.utc).isoformat()
             self.store.learning_policy.auto_approve_low_risk_tuning = payload.auto_approve_low_risk_tuning
-            self.store.learning_policy.updated_at = datetime.now(timezone.utc).isoformat()
+            self.store.learning_policy.updated_at = applied_at
+            approval.applied_at = applied_at
         return {"learning_policy": self.store.learning_policy, "applied_approval_id": payload.approval_request_id}
 
     def _add_asset(

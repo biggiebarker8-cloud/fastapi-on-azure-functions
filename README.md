@@ -63,4 +63,6 @@ This sample now includes additional API routes for a creative assistant profile 
 
 Calling the restore endpoint is intentionally non-idempotent: each call creates additional version-history entries (checkpoint + restore event).
 
+For approval-gated routes, actor identity comes from the request context: when auth is disabled the service reads `X-Actor-Id`, and when auth is enabled it uses the authenticated owner context and ignores caller-supplied `requested_by` fields.
+
 These routes use an in-memory store intended as scaffolding for a future persistent backend, so data resets on restart and is not shared across scaled-out instances.
