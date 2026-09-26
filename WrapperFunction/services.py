@@ -82,8 +82,8 @@ class AssistantService:
                 self.identity.lore = lore
         return self.identity
 
-    def resolve_identity(self, name: str) -> AssistantIdentity:
-        lookup_key = self._normalize_lookup_key(name)
+    def resolve_identity(self, alias: str) -> AssistantIdentity:
+        lookup_key = self._normalize_lookup_key(alias)
         candidates = {self._normalize_lookup_key(alias) for alias in self.identity.aliases}
         candidates.add(self._normalize_lookup_key(self.identity.name))
         if lookup_key not in candidates:
