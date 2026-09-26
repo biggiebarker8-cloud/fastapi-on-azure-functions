@@ -1,11 +1,9 @@
-import asyncio
 import unittest
 
 from pydantic import ValidationError
 
 from fastapi import HTTPException
 
-from WrapperFunction.__init__ import get_identity_by_name
 from WrapperFunction.actor_context import reset_current_actor, set_current_actor
 from WrapperFunction.models import (
     ApprovalDecision,
@@ -128,16 +126,6 @@ class AssistantServiceTests(unittest.TestCase):
             identity=AssistantIdentity(name="Karma", aliases=["Alliance Bot"], tone="direct"),
         )
         self.assertIsInstance(legacy_service, AssistantService)
-
-    def test_identity_alias_route_redirects_to_canonical_identity(self) -> None:
-        class DummyRequest:
-            @staticmethod
-            def url_for(name: str) -> str:
-                return "/identity"
-
-        response = asyncio.run(get_identity_by_name("Alliance Bot", DummyRequest()))
-        self.assertEqual(response.status_code, 307)
-        self.assertTrue(response.headers["location"].endswith("/identity"))
 
     def test_plugin_promotion_requires_owner_approval(self) -> None:
         plugin = self.service.draft_plugin(

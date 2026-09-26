@@ -210,7 +210,8 @@ To learn more about leveraging WSGI and ASGI-compatible frameworks, see [Web fra
 
 This sample now includes additional API routes for one assistant profile whose canonical name defaults to `Karma` and whose aliases can also include `Alliance Bot`:
 
-- `GET/PATCH /identity` for assistant identity, tone, and lore
+- `GET /identity` for the canonical assistant identity profile
+- `PATCH /identity` to update assistant identity, tone, and lore
 - `GET /assistant/identity/{name}` to resolve `Karma`, `Alliance Bot`, or any configured alias to the same assistant profile
 - Identity includes an explicit authority rule: the user is the final decision-maker
 - `GET/PUT /preferences` for remembering user likes, dislikes, and output preferences
