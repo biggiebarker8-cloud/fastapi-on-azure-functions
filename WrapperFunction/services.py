@@ -358,6 +358,8 @@ class KarmaService:
         if plugin.lifecycle_state == "killed" and payload.enabled:
             raise HTTPException(status_code=400, detail="Killed plugins must be rolled back or rebuilt before enabling.")
         if payload.enabled:
+            if plugin.lifecycle_state == "pending_approval":
+                raise HTTPException(status_code=403, detail="Plugin enablement is blocked while an approval decision is pending.")
             self._get_required_approved_plugin_approval(plugin)
 
         with self.store.lock:
@@ -367,18 +369,20 @@ class KarmaService:
 
     def rollback_plugin(self, plugin_id: str, payload: PluginRollbackRequest) -> Plugin:
         plugin = self._get_plugin_or_404(plugin_id)
+        actor = self._current_actor()
         with self.store.lock:
             plugin.lifecycle_state = "rolled_back"
-            plugin.rollback_history.append(f"{payload.requested_by}: {payload.reason}")
+            plugin.rollback_history.append(f"{actor}: {payload.reason}")
             plugin.updated_at = datetime.now(timezone.utc).isoformat()
         return plugin
 
     def kill_plugin(self, plugin_id: str, payload: PluginKillRequest) -> Plugin:
         plugin = self._get_plugin_or_404(plugin_id)
+        actor = self._current_actor()
         with self.store.lock:
             plugin.lifecycle_state = "killed"
             plugin.health_status = "unhealthy"
-            plugin.rollback_history.append(f"{payload.requested_by}: kill switch - {payload.reason}")
+            plugin.rollback_history.append(f"{actor}: kill switch - {payload.reason}")
             plugin.updated_at = datetime.now(timezone.utc).isoformat()
         return plugin
 
@@ -419,7 +423,13 @@ class KarmaService:
             return skill
 
     def create_approval_request(self, payload: ApprovalRequestCreate) -> ApprovalRequest:
-        approval = ApprovalRequest(**payload.model_dump())
+        approval_payload = payload.model_dump()
+        actor = get_current_actor()
+        if payload.required_owner_approval:
+            approval_payload["requested_by"] = self._current_actor()
+        elif actor:
+            approval_payload["requested_by"] = actor
+        approval = ApprovalRequest(**approval_payload)
         return self.store.add_approval(approval)
 
     def decide_approval(self, approval_id: str, payload: ApprovalDecision) -> ApprovalRequest:
@@ -542,7 +552,11 @@ class KarmaService:
             raise HTTPException(status_code=403, detail="Learning policy changes require prior approved request.")
 
         approval = self.store.approvals.get(payload.approval_request_id)
-        if not approval or approval.target_type != "learning_policy":
+        if (
+            not approval
+            or approval.target_type != "learning_policy"
+            or approval.action_type != "learning_rule_change"
+        ):
             raise HTTPException(status_code=400, detail="Approval request does not apply to learning policy.")
 
         with self.store.lock:

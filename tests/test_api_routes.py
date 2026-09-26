@@ -119,6 +119,28 @@ class KarmaApiRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["requested_by"], "reviewer-2")
 
+    def test_plugin_kill_route_uses_request_actor_context_for_audit(self):
+        wf.AUTH_ENABLED = False
+
+        plugin = self.client.post(
+            "/plugins/drafts",
+            json={
+                "name": "kill-switch",
+                "owner": "owner",
+                "plugin_type": "integration",
+                "capabilities": ["read_data", "run_workflow"],
+            },
+        ).json()
+
+        response = self.client.post(
+            f"/plugins/{plugin['id']}/kill",
+            headers={"X-Actor-Id": "reviewer-3"},
+            json={"requested_by": "spoofed", "reason": "safety stop"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("reviewer-3: kill switch - safety stop", response.json()["rollback_history"][-1])
+
     def test_knowledge_base_routes_return_seeded_entries(self):
         wf.AUTH_ENABLED = False
 
