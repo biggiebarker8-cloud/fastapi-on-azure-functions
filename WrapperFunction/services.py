@@ -245,7 +245,6 @@ class KarmaService:
                 metadata_snapshot=dict(asset.metadata),
                 reference_id_snapshot=asset.reference_id,
                 source_version=current_version_before_restore,
-                restored_from_version=current_version_before_restore,
             )
             asset.metadata = dict(selected_version.metadata_snapshot)
             if selected_version.reference_id_snapshot is not None:
@@ -504,6 +503,7 @@ class KarmaService:
             raise HTTPException(status_code=400, detail=check.reason)
 
         playbook = Playbook(**payload.model_dump())
+        playbook.requested_by = self._current_actor()
         auto_approve = payload.risk_level == "low" and self.store.learning_policy.auto_approve_low_risk_tuning
         if auto_approve:
             playbook.status = "active"
@@ -514,7 +514,7 @@ class KarmaService:
                     action_type="learning_rule_change",
                     target_type="playbook",
                     target_id=playbook.id,
-                    requested_by=payload.requested_by,
+                    requested_by=self._current_actor(),
                     reason="Approve playbook activation.",
                     required_owner_approval=True,
                 )

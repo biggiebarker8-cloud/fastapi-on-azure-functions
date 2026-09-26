@@ -95,6 +95,30 @@ class KarmaApiRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["requested_by"], "owner")
 
+    def test_plugin_approval_request_uses_request_actor_context(self):
+        wf.AUTH_ENABLED = False
+
+        plugin = self.client.post(
+            "/plugins/drafts",
+            json={
+                "name": "shop-sync",
+                "owner": "owner",
+                "plugin_type": "integration",
+                "capabilities": ["read_data", "run_workflow"],
+            },
+        ).json()
+        self.client.post(f"/plugins/{plugin['id']}/validate")
+        self.client.post(f"/plugins/{plugin['id']}/staging-test")
+
+        response = self.client.post(
+            f"/plugins/{plugin['id']}/approval-request",
+            headers={"X-Actor-Id": "reviewer-2"},
+            json={"reason": "ship it"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["requested_by"], "reviewer-2")
+
     def test_knowledge_base_routes_return_seeded_entries(self):
         wf.AUTH_ENABLED = False
 

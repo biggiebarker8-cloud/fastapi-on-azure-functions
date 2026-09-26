@@ -1,6 +1,6 @@
 import os
 
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import Body, Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -166,7 +166,7 @@ async def stage_plugin(plugin_id: str):
 
 
 @app.post("/plugins/{plugin_id}/approval-request", dependencies=[Depends(require_auth)])
-async def submit_plugin_approval(plugin_id: str, reason: str = ""):
+async def submit_plugin_approval(plugin_id: str, reason: str = Body(default="", embed=True)):
     return service.submit_plugin_for_approval(plugin_id, reason=reason)
 
 
@@ -249,7 +249,7 @@ async def list_playbooks():
 
 
 @app.post("/learning/policy/approval-request", dependencies=[Depends(require_auth)])
-async def request_learning_policy_change(reason: str = ""):
+async def request_learning_policy_change(reason: str = Body(default="", embed=True)):
     return service.request_learning_policy_change(reason=reason)
 
 
