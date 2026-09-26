@@ -259,7 +259,7 @@ class KarmaService:
                 action_type="plugin_publish",
                 target_type="plugin",
                 target_id=plugin_id,
-                requested_by=requested_by,
+                requested_by=self._current_actor(),
                 reason=reason or "Promote plugin from staging to production.",
                 required_owner_approval=True,
             )
@@ -278,7 +278,7 @@ class KarmaService:
                 action_type="plugin_update",
                 target_type="plugin",
                 target_id=plugin.id,
-                requested_by=payload.requested_by,
+                requested_by=self._current_actor(),
                 reason=f"Approve plugin version {payload.version}.",
                 required_owner_approval=True,
             )
@@ -334,7 +334,7 @@ class KarmaService:
                     action_type="skill_external_access",
                     target_type="skill",
                     target_id=skill.id,
-                    requested_by=payload.owner,
+                    requested_by=self._current_actor(),
                     reason="External API access requested for skill.",
                     required_owner_approval=True,
                 )
@@ -358,10 +358,7 @@ class KarmaService:
         return skill
 
     def create_approval_request(self, payload: ApprovalRequestCreate) -> ApprovalRequest:
-        approval_data = payload.model_dump()
-        if payload.required_owner_approval:
-            approval_data["requested_by"] = self._current_actor()
-        approval = ApprovalRequest(**approval_data)
+        approval = ApprovalRequest(**payload.model_dump())
         return self.store.add_approval(approval)
 
     def decide_approval(self, approval_id: str, payload: ApprovalDecision) -> ApprovalRequest:
@@ -465,7 +462,7 @@ class KarmaService:
                 action_type="learning_rule_change",
                 target_type="learning_policy",
                 target_id="learning_policy",
-                requested_by=requested_by,
+                requested_by=self._current_actor(),
                 reason=reason or "Approve learning policy change.",
                 required_owner_approval=True,
             )
@@ -521,6 +518,7 @@ class KarmaService:
                 and candidate.status == "approved"
                 and candidate.target_type == "plugin"
                 and candidate.target_id == plugin.id
+                and candidate.action_type in {"plugin_publish", "plugin_update"}
             ):
                 approval = candidate
         if approval is None:
@@ -542,6 +540,8 @@ class KarmaService:
             if approval.status != "approved":
                 continue
             if approval.target_type != "plugin" or approval.target_id != plugin_id:
+                continue
+            if approval.action_type not in {"plugin_publish", "plugin_update"}:
                 continue
             sort_key = approval.decided_at or approval.created_at
             if sort_key >= latest_approval_sort_key:

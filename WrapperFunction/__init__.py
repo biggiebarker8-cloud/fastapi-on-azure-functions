@@ -4,7 +4,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from .actor_context import reset_current_actor, set_current_actor
+from .actor_context import get_current_actor, reset_current_actor, set_current_actor
 from .config import ASSISTANT_AUTHORITY_RULE, ASSISTANT_NAME, ASSISTANT_STYLE
 from .models import (
     ApprovalDecision,
@@ -200,6 +200,8 @@ async def toggle_skill(skill_id: str, payload: SkillToggleRequest):
 
 @app.post("/approvals", dependencies=[Depends(require_auth)])
 async def create_approval(payload: ApprovalRequestCreate):
+    if payload.required_owner_approval:
+        payload = payload.model_copy(update={"requested_by": get_current_actor()})
     return service.create_approval_request(payload)
 
 
