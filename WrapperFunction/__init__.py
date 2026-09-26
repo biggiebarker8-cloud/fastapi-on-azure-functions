@@ -97,7 +97,8 @@ async def update_identity(name: str | None = None, tone: str | None = None, lore
 
 @app.get("/preferences", dependencies=[Depends(require_auth)])
 async def get_preferences():
-    return store.preferences
+    with store.lock:
+        return store.preferences
 
 
 @app.put("/preferences", dependencies=[Depends(require_auth)])
@@ -117,12 +118,14 @@ async def create_universe(payload: UniverseCreate):
 
 @app.get("/universes", dependencies=[Depends(require_auth)])
 async def list_universes():
-    return list(store.universes.values())
+    with store.lock:
+        return list(store.universes.values())
 
 
 @app.get("/universes/{universe_id}", dependencies=[Depends(require_auth)])
 async def get_universe(universe_id: str):
-    universe = store.universes.get(universe_id)
+    with store.lock:
+        universe = store.universes.get(universe_id)
     if not universe:
         raise HTTPException(status_code=404, detail="Universe not found.")
     return universe
@@ -135,7 +138,8 @@ async def create_character(payload: CharacterCreate):
 
 @app.get("/characters", dependencies=[Depends(require_auth)])
 async def list_characters(universe_id: str | None = None):
-    values = list(store.characters.values())
+    with store.lock:
+        values = list(store.characters.values())
     if not universe_id:
         return values
     return [item for item in values if item.universe_id == universe_id]
@@ -148,7 +152,8 @@ async def create_story(payload: StoryCreate):
 
 @app.get("/stories", dependencies=[Depends(require_auth)])
 async def list_stories(universe_id: str | None = None):
-    values = list(store.stories.values())
+    with store.lock:
+        values = list(store.stories.values())
     if not universe_id:
         return values
     return [item for item in values if item.universe_id == universe_id]
@@ -166,7 +171,8 @@ async def edit_image(payload: ImageEditRequest):
 
 @app.get("/assets", dependencies=[Depends(require_auth)])
 async def list_assets(universe_id: str | None = None):
-    values = list(store.assets.values())
+    with store.lock:
+        values = list(store.assets.values())
     if not universe_id:
         return values
     return [item for item in values if item.universe_id == universe_id]
@@ -174,7 +180,8 @@ async def list_assets(universe_id: str | None = None):
 
 @app.get("/assets/{asset_id}", dependencies=[Depends(require_auth)])
 async def get_asset(asset_id: str):
-    asset = store.assets.get(asset_id)
+    with store.lock:
+        asset = store.assets.get(asset_id)
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found.")
     return asset

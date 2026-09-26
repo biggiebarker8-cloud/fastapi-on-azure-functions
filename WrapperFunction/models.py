@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import List, Literal, Optional
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 def _now_iso() -> str:
@@ -88,6 +88,16 @@ class MerchDesignCreate(BaseModel):
     print_area: Literal["front", "back", "sleeve", "full"]
     variants: List[str] = Field(default_factory=list)
     export_formats: List[str] = Field(default_factory=lambda: ["png"])
+
+    @model_validator(mode="after")
+    def validate_print_area(self) -> "MerchDesignCreate":
+        allowed = {
+            "hoodie": {"front", "back", "sleeve", "full"},
+            "tshirt": {"front", "back", "full"},
+        }
+        if self.print_area not in allowed[self.product_type]:
+            raise ValueError(f"Invalid print area for {self.product_type}.")
+        return self
 
 
 class ImageEditRequest(BaseModel):

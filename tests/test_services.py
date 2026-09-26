@@ -1,6 +1,7 @@
 import unittest
 
 from fastapi import HTTPException
+from pydantic import ValidationError
 
 from WrapperFunction.models import (
     AssistantIdentity,
@@ -89,17 +90,13 @@ class KarmaServiceTests(unittest.TestCase):
     def test_merch_design_rejects_invalid_print_area(self):
         universe = self._create_universe("primary")
 
-        with self.assertRaises(HTTPException) as context:
-            self.service.create_merch_design(
-                MerchDesignCreate(
-                    universe_id=universe.id,
-                    product_type="tshirt",
-                    theme_prompt="clean design",
-                    print_area="sleeve",
-                )
+        with self.assertRaises(ValidationError):
+            MerchDesignCreate(
+                universe_id=universe.id,
+                product_type="tshirt",
+                theme_prompt="clean design",
+                print_area="sleeve",
             )
-
-        self.assertEqual(context.exception.status_code, 400)
 
     def test_merch_design_allows_supported_print_areas(self):
         universe = self._create_universe("primary")
@@ -123,6 +120,25 @@ class KarmaServiceTests(unittest.TestCase):
 
         self.assertEqual(hoodie_asset.current_version, 1)
         self.assertEqual(tshirt_asset.current_version, 1)
+
+    def test_restore_asset_version_reuses_snapshot_and_tracks_source(self):
+        universe = self._create_universe("primary")
+        asset = self.service.create_merch_design(
+            MerchDesignCreate(
+                universe_id=universe.id,
+                product_type="hoodie",
+                theme_prompt="v1",
+                print_area="front",
+            )
+        )
+        self.store.assets[asset.id].metadata["theme_prompt"] = "v2"
+        self.store.append_asset_version(asset.id, "updated", metadata_snapshot=dict(self.store.assets[asset.id].metadata))
+
+        restored = self.service.restore_asset_version(asset.id, 1)
+
+        self.assertEqual(restored.metadata["theme_prompt"], "v1")
+        self.assertEqual(restored.current_version, 3)
+        self.assertEqual(restored.versions[-1].source_version, 1)
 
 
 if __name__ == "__main__":
