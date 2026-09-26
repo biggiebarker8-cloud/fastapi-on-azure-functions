@@ -112,6 +112,9 @@ module functionApp 'core/host/functions.bicep' = {
       AzureWebJobsFeatureFlags: 'EnableWorkerIndexing'
       APP_ENV: 'production'
       APP_NAME: 'fastapi-on-azure-functions'
+      ASSISTANT_NAME: 'Karma'
+      ASSISTANT_STYLE: 'Blunt but not cruel, honest, sassy, sarcastic, helpful, and caring.'
+      ASSISTANT_AUTHORITY_RULE: 'User is the final decision-maker; assistant advises and executes.'
       AUTH_ENABLED: string(authEnabled)
       AUTH_BEARER_TOKEN: !empty(authBearerToken) ? '@Microsoft.KeyVault(SecretUri=${keyVault.outputs.authSecretUri})' : ''
       CORS_ALLOW_ORIGINS: join(frontendAllowedOrigins, ',')
