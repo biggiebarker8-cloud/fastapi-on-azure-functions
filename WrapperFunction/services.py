@@ -52,19 +52,41 @@ ALLOWED_PLUGIN_CAPABILITIES = {
 }
 
 
-class KarmaService:
+class AssistantService:
     def __init__(self, store: InMemoryStore, identity: AssistantIdentity) -> None:
         self.store = store
         self.identity = identity
+        self.identity.aliases = self._normalize_aliases(self.identity.name, self.identity.aliases)
 
-    def set_identity(self, name: str | None = None, tone: str | None = None, lore: str | None = None) -> AssistantIdentity:
+    def set_identity(
+        self,
+        name: str | None = None,
+        aliases: list[str] | None = None,
+        tone: str | None = None,
+        lore: str | None = None,
+    ) -> AssistantIdentity:
         with self.store.lock:
+            current_name = self.identity.name
             if name:
                 self.identity.name = name
+            if aliases is not None:
+                self.identity.aliases = self._normalize_aliases(self.identity.name, aliases)
+            elif name:
+                existing_aliases = [
+                    alias for alias in self.identity.aliases if alias.casefold() != current_name.casefold()
+                ]
+                self.identity.aliases = self._normalize_aliases(self.identity.name, existing_aliases)
             if tone:
                 self.identity.tone = tone
             if lore is not None:
                 self.identity.lore = lore
+        return self.identity
+
+    def resolve_identity(self, name: str) -> AssistantIdentity:
+        candidates = {alias.casefold() for alias in self.identity.aliases}
+        candidates.add(self.identity.name.casefold())
+        if name.casefold() not in candidates:
+            raise HTTPException(status_code=404, detail="Assistant identity not found.")
         return self.identity
 
     def update_preferences(self, payload: PreferenceUpdate) -> UserPreferenceProfile:
@@ -499,6 +521,21 @@ class KarmaService:
                 detail=f"Unsupported capabilities: {', '.join(sorted(invalid))}.",
             )
 
+    @staticmethod
+    def _normalize_aliases(name: str, aliases: list[str]) -> list[str]:
+        normalized: list[str] = []
+        seen: set[str] = set()
+        for alias in [name, *aliases]:
+            cleaned = alias.strip()
+            if not cleaned:
+                continue
+            key = cleaned.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            normalized.append(cleaned)
+        return normalized
+
     def _get_plugin_or_404(self, plugin_id: str) -> Plugin:
         plugin = self.store.plugins.get(plugin_id)
         if not plugin:
@@ -551,3 +588,6 @@ class KarmaService:
                 latest_approval_id = approval.id
                 latest_approval_sort_key = sort_key
         return latest_approval_id
+
+
+KarmaService = AssistantService

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from .actor_context import get_current_actor, reset_current_actor, set_current_actor
-from .config import ASSISTANT_AUTHORITY_RULE, ASSISTANT_NAME, ASSISTANT_STYLE
+from .config import ASSISTANT_AUTHORITY_RULE, ASSISTANT_STYLE, BOT_ALIASES, BOT_NAME
 from .models import (
     ApprovalDecision,
     ApprovalRequestCreate,
@@ -29,7 +29,7 @@ from .models import (
     StoryCreate,
     UniverseCreate,
 )
-from .services import KarmaService
+from .services import AssistantService
 from .storage import InMemoryStore
 
 
@@ -55,10 +55,11 @@ ALLOWED_HEADERS = _get_list_env("CORS_ALLOW_HEADERS", "*")
 app = FastAPI(title=APP_NAME)
 bearer_scheme = HTTPBearer(auto_error=False)
 store = InMemoryStore()
-service = KarmaService(
+service = AssistantService(
     store=store,
     identity=AssistantIdentity(
-        name=ASSISTANT_NAME,
+        name=BOT_NAME,
+        aliases=BOT_ALIASES,
         tone=ASSISTANT_STYLE,
         authority_rule=ASSISTANT_AUTHORITY_RULE,
     ),
@@ -121,6 +122,11 @@ async def get_identity():
 @app.patch("/identity", dependencies=[Depends(require_auth)])
 async def update_identity(payload: IdentityUpdate):
     return service.set_identity(**payload.model_dump(exclude_unset=True))
+
+
+@app.get("/assistant/identity/{name}", dependencies=[Depends(require_auth)])
+async def get_identity_by_name(name: str):
+    return service.resolve_identity(name)
 
 
 @app.get("/preferences", dependencies=[Depends(require_auth)])

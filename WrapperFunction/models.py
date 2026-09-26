@@ -17,6 +17,7 @@ def _new_id(prefix: str) -> str:
 
 class AssistantIdentity(BaseModel):
     name: str = "Karma"
+    aliases: list[str] = Field(default_factory=lambda: ["Karma"])
     tone: str
     lore: str = ""
     authority_rule: str = "User is the final decision-maker; assistant advises and executes."
@@ -24,6 +25,7 @@ class AssistantIdentity(BaseModel):
 
 class IdentityUpdate(BaseModel):
     name: str | None = None
+    aliases: list[str] | None = None
     tone: str | None = None
     lore: str | None = None
 

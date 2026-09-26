@@ -134,6 +134,8 @@ The function app supports environment-driven behavior using these app settings:
 
 - `APP_ENV` (default: `development`)
 - `APP_NAME` (default: `fastapi-on-azure-functions`)
+- `BOT_NAME` (default: `Karma`, falls back to `ASSISTANT_NAME` for older deployments)
+- `BOT_ALIASES` (comma-separated, default: `Karma,Alliance Bot,Alliance`)
 - `AUTH_ENABLED` (`true`/`false`, default: `false`)
 - `AUTH_BEARER_TOKEN` (required when `AUTH_ENABLED=true`)
 - `CORS_ALLOW_ORIGINS` (comma-separated, default: `*`)
@@ -204,11 +206,12 @@ Now you have a simple Azure Function App using the FastAPI framework, and you ca
 
 To learn more about leveraging WSGI and ASGI-compatible frameworks, see [Web frameworks](https://docs.microsoft.com/azure/azure-functions/functions-reference-python?tabs=asgi%2Cazurecli-linux%2Capplication-level#web-frameworks).
 
-## Karma creative API extensions
+## Unified assistant API extensions
 
-This sample now includes additional API routes for a creative assistant profile named `Karma`:
+This sample now includes additional API routes for one assistant profile whose canonical name defaults to `Karma` and whose aliases can also include `Alliance Bot`:
 
 - `GET/PATCH /identity` for assistant identity, tone, and lore
+- `GET /assistant/identity/{name}` to resolve `Karma`, `Alliance Bot`, or any configured alias to the same assistant profile
 - Identity includes an explicit authority rule: the user is the final decision-maker
 - `GET/PUT /preferences` for remembering user likes, dislikes, and output preferences
 - `POST /structure-thought` to transform non-linear input into a structured plan with direct feasibility feedback

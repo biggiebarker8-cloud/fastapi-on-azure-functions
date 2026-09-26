@@ -19,17 +19,17 @@ from WrapperFunction.models import (
     SkillToggleRequest,
     UniverseCreate,
 )
-from WrapperFunction.services import KarmaService
+from WrapperFunction.services import AssistantService, KarmaService
 from WrapperFunction.storage import InMemoryStore
 
 
-class KarmaServiceTests(unittest.TestCase):
+class AssistantServiceTests(unittest.TestCase):
     def setUp(self) -> None:
         self.actor_token = set_current_actor("owner")
         self.store = InMemoryStore()
-        self.service = KarmaService(
+        self.service = AssistantService(
             store=self.store,
-            identity=AssistantIdentity(name="Karma", tone="direct"),
+            identity=AssistantIdentity(name="Karma", aliases=["Alliance Bot", "Alliance"], tone="direct"),
         )
         self.universe = self.service.create_universe(UniverseCreate(name="Test Universe"))
 
@@ -109,6 +109,23 @@ class KarmaServiceTests(unittest.TestCase):
                 print_area="sleeve",
                 theme_prompt="invalid combo",
             )
+
+    def test_resolve_identity_accepts_alias_and_returns_canonical_profile(self) -> None:
+        identity = self.service.resolve_identity("Alliance Bot")
+        self.assertEqual(identity.name, "Karma")
+        self.assertEqual(identity.aliases, ["Karma", "Alliance Bot", "Alliance"])
+
+    def test_renaming_identity_preserves_noncanonical_aliases(self) -> None:
+        identity = self.service.set_identity(name="Karma Prime")
+        self.assertEqual(identity.name, "Karma Prime")
+        self.assertEqual(identity.aliases, ["Karma Prime", "Alliance Bot", "Alliance"])
+
+    def test_karma_service_alias_remains_available(self) -> None:
+        legacy_service = KarmaService(
+            store=InMemoryStore(),
+            identity=AssistantIdentity(name="Karma", aliases=["Alliance Bot"], tone="direct"),
+        )
+        self.assertIsInstance(legacy_service, AssistantService)
 
     def test_plugin_promotion_requires_owner_approval(self) -> None:
         plugin = self.service.draft_plugin(

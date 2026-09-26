@@ -112,7 +112,8 @@ module functionApp 'core/host/functions.bicep' = {
       AzureWebJobsFeatureFlags: 'EnableWorkerIndexing'
       APP_ENV: 'production'
       APP_NAME: 'fastapi-on-azure-functions'
-      ASSISTANT_NAME: 'Karma'
+      BOT_NAME: 'Karma'
+      BOT_ALIASES: 'Karma,Alliance Bot,Alliance'
       ASSISTANT_STYLE: 'Blunt but not cruel, honest, sassy, sarcastic, helpful, and caring.'
       ASSISTANT_AUTHORITY_RULE: 'User is the final decision-maker; assistant advises and executes.'
       AUTH_ENABLED: string(authEnabled)
