@@ -119,6 +119,11 @@ class AssistantServiceTests(unittest.TestCase):
         identity = self.service.resolve_identity(" Alliance Bot ")
         self.assertEqual(identity.name, "Karma")
 
+    def test_resolve_identity_rejects_unknown_alias(self) -> None:
+        with self.assertRaises(HTTPException) as exc:
+            self.service.resolve_identity("Unknown Alias")
+        self.assertEqual(exc.exception.status_code, 404)
+
     def test_renaming_identity_preserves_noncanonical_aliases(self) -> None:
         identity = self.service.set_identity(name="Karma Prime")
         self.assertEqual(identity.name, "Karma Prime")
