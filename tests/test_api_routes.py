@@ -16,6 +16,11 @@ class KarmaApiRouteTests(unittest.TestCase):
             wf.store.characters.clear()
             wf.store.stories.clear()
             wf.store.assets.clear()
+            wf.store.plugins.clear()
+            wf.store.skills.clear()
+            wf.store.approvals.clear()
+            wf.store.learning_events.clear()
+            wf.store.playbooks.clear()
 
     def tearDown(self):
         wf.AUTH_ENABLED = self.original_auth_enabled
@@ -52,6 +57,113 @@ class KarmaApiRouteTests(unittest.TestCase):
         self.assertEqual(body["name"], original["name"])
         self.assertEqual(body["tone"], original["tone"])
         self.assertEqual(body["lore"], "new lore")
+
+    def test_approval_routes_always_use_request_actor_context(self):
+        wf.AUTH_ENABLED = False
+
+        response = self.client.post(
+            "/approvals",
+            headers={"X-Actor-Id": "reviewer-1"},
+            json={
+                "action_type": "learning_rule_change",
+                "target_type": "learning_policy",
+                "target_id": "learning_policy",
+                "requested_by": "spoofed",
+                "required_owner_approval": False,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["requested_by"], "reviewer-1")
+
+    def test_authenticated_requests_ignore_actor_spoofing_headers(self):
+        wf.AUTH_ENABLED = True
+        wf.AUTH_BEARER_TOKEN = "secret"
+
+        response = self.client.post(
+            "/approvals",
+            headers={"Authorization": "Bearer " + wf.AUTH_BEARER_TOKEN, "X-Actor-Id": "attacker"},
+            json={
+                "action_type": "learning_rule_change",
+                "target_type": "learning_policy",
+                "target_id": "learning_policy",
+                "requested_by": "spoofed",
+                "required_owner_approval": True,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["requested_by"], "owner")
+
+    def test_plugin_approval_request_uses_request_actor_context(self):
+        wf.AUTH_ENABLED = False
+
+        plugin = self.client.post(
+            "/plugins/drafts",
+            json={
+                "name": "shop-sync",
+                "owner": "owner",
+                "plugin_type": "integration",
+                "capabilities": ["read_data", "run_workflow"],
+            },
+        ).json()
+        self.client.post(f"/plugins/{plugin['id']}/validate")
+        self.client.post(f"/plugins/{plugin['id']}/staging-test")
+
+        response = self.client.post(
+            f"/plugins/{plugin['id']}/approval-request",
+            headers={"X-Actor-Id": "reviewer-2"},
+            json={"reason": "ship it"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["requested_by"], "reviewer-2")
+
+    def test_plugin_kill_route_uses_request_actor_context_for_audit(self):
+        wf.AUTH_ENABLED = False
+
+        plugin = self.client.post(
+            "/plugins/drafts",
+            json={
+                "name": "kill-switch",
+                "owner": "owner",
+                "plugin_type": "integration",
+                "capabilities": ["read_data", "run_workflow"],
+            },
+        ).json()
+
+        response = self.client.post(
+            f"/plugins/{plugin['id']}/kill",
+            headers={"X-Actor-Id": "reviewer-3"},
+            json={"requested_by": "spoofed", "reason": "safety stop"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("reviewer-3: kill switch - safety stop", response.json()["rollback_history"][-1])
+
+    def test_authenticated_kill_requests_ignore_actor_spoofing_headers(self):
+        wf.AUTH_ENABLED = True
+        wf.AUTH_BEARER_TOKEN = "secret"
+
+        plugin = self.client.post(
+            "/plugins/drafts",
+            headers={"Authorization": "Bearer " + wf.AUTH_BEARER_TOKEN},
+            json={
+                "name": "kill-auth",
+                "owner": "owner",
+                "plugin_type": "integration",
+                "capabilities": ["read_data", "run_workflow"],
+            },
+        ).json()
+
+        response = self.client.post(
+            f"/plugins/{plugin['id']}/kill",
+            headers={"Authorization": "Bearer " + wf.AUTH_BEARER_TOKEN, "X-Actor-Id": "attacker"},
+            json={"requested_by": "spoofed", "reason": "safety stop"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("owner: kill switch - safety stop", response.json()["rollback_history"][-1])
 
     def test_knowledge_base_routes_return_seeded_entries(self):
         wf.AUTH_ENABLED = False
