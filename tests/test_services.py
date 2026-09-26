@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from WrapperFunction.models import (
     AssistantIdentity,
     CharacterCreate,
+    ImageEditRequest,
     MerchDesignCreate,
     StoryCreate,
     UniverseCreate,
@@ -46,6 +47,13 @@ class KarmaServiceTests(unittest.TestCase):
 
         self.assertEqual(story.universe_id, universe.id)
         self.assertEqual(story.continuity_notes, [])
+
+    def test_set_identity_supports_partial_updates(self):
+        updated = self.service.set_identity(lore="new lore")
+
+        self.assertEqual(updated.name, "Karma")
+        self.assertEqual(updated.tone, "direct")
+        self.assertEqual(updated.lore, "new lore")
 
     def test_create_story_allows_crossover_when_enabled(self):
         primary = self._create_universe("primary")
@@ -120,6 +128,7 @@ class KarmaServiceTests(unittest.TestCase):
 
         self.assertEqual(hoodie_asset.current_version, 1)
         self.assertEqual(tshirt_asset.current_version, 1)
+        self.assertNotIn("clean design", hoodie_asset.versions[0].content_summary)
 
     def test_restore_asset_version_reuses_snapshot_and_tracks_source(self):
         universe = self._create_universe("primary")
@@ -139,6 +148,28 @@ class KarmaServiceTests(unittest.TestCase):
         self.assertEqual(restored.metadata["theme_prompt"], "v1")
         self.assertEqual(restored.current_version, 4)
         self.assertEqual(restored.versions[-1].source_version, 1)
+
+    def test_image_edit_summary_avoids_raw_instructions(self):
+        universe = self._create_universe("primary")
+        source = self.service.create_merch_design(
+            MerchDesignCreate(
+                universe_id=universe.id,
+                product_type="hoodie",
+                theme_prompt="clean design",
+                print_area="front",
+            )
+        )
+
+        asset = self.service.edit_image(
+            ImageEditRequest(
+                universe_id=universe.id,
+                source_asset_id=source.id,
+                operation="iterative_revision",
+                instructions="embed confidential phrase",
+            )
+        )
+
+        self.assertNotIn("confidential phrase", asset.versions[0].content_summary)
 
 
 if __name__ == "__main__":

@@ -41,6 +41,18 @@ class KarmaApiRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "Universe not found.")
 
+    def test_identity_patch_updates_only_supplied_fields(self):
+        wf.AUTH_ENABLED = False
+
+        original = self.client.get("/identity").json()
+        response = self.client.patch("/identity", json={"lore": "new lore"})
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["name"], original["name"])
+        self.assertEqual(body["tone"], original["tone"])
+        self.assertEqual(body["lore"], "new lore")
+
     def test_characters_route_filters_by_universe(self):
         wf.AUTH_ENABLED = False
 
@@ -117,6 +129,32 @@ class KarmaApiRouteTests(unittest.TestCase):
         body = restored.json()
         self.assertEqual(body["metadata"]["theme_prompt"], "v1")
         self.assertEqual(body["versions"][-1]["source_version"], 1)
+
+    def test_asset_version_summaries_do_not_echo_raw_prompts(self):
+        wf.AUTH_ENABLED = False
+
+        universe = self.client.post("/universes", json={"name": "u1"}).json()
+        merch_asset = self.client.post(
+            "/merch-designs",
+            json={
+                "universe_id": universe["id"],
+                "product_type": "hoodie",
+                "theme_prompt": "secret launch plan",
+                "print_area": "front",
+            },
+        ).json()
+        image_asset = self.client.post(
+            "/image-edits",
+            json={
+                "universe_id": universe["id"],
+                "source_asset_id": merch_asset["id"],
+                "operation": "iterative_revision",
+                "instructions": "replace the logo with project ember",
+            },
+        ).json()
+
+        self.assertNotIn("secret launch plan", merch_asset["versions"][0]["content_summary"])
+        self.assertNotIn("project ember", image_asset["versions"][0]["content_summary"])
 
 
 if __name__ == "__main__":

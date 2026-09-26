@@ -91,9 +91,9 @@ async def get_identity():
     return service.identity
 
 
-@app.put("/identity", dependencies=[Depends(require_auth)])
+@app.patch("/identity", dependencies=[Depends(require_auth)])
 async def update_identity(payload: IdentityUpdate):
-    return service.set_identity(name=payload.name, tone=payload.tone, lore=payload.lore)
+    return service.set_identity(**payload.model_dump(exclude_unset=True))
 
 
 @app.get("/preferences", dependencies=[Depends(require_auth)])
