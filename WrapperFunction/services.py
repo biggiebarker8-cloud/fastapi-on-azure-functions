@@ -376,7 +376,7 @@ class KarmaService:
 
         if approval.target_type == "plugin":
             plugin = self.store.plugins.get(approval.target_id)
-            if plugin:
+            if plugin and plugin.approval_request_id == approval.id:
                 with self.store.lock:
                     if approval.action_type == "plugin_publish":
                         plugin.lifecycle_state = "enabled" if payload.approve else (plugin.pre_approval_lifecycle_state or "staged")
@@ -529,7 +529,10 @@ class KarmaService:
         return approval
 
     def _current_actor(self) -> str:
-        return get_current_actor()
+        actor = get_current_actor()
+        if not actor:
+            raise HTTPException(status_code=403, detail="Owner-gated actions require authenticated actor context.")
+        return actor
 
     def _latest_approved_plugin_approval_id(self, plugin_id: str, exclude_approval_id: str | None = None) -> str | None:
         latest_approval_id: str | None = None

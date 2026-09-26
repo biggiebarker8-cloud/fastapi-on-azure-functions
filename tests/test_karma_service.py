@@ -4,6 +4,7 @@ from pydantic import ValidationError
 
 from fastapi import HTTPException
 
+from WrapperFunction.actor_context import reset_current_actor, set_current_actor
 from WrapperFunction.models import (
     ApprovalDecision,
     AssistantIdentity,
@@ -24,12 +25,16 @@ from WrapperFunction.storage import InMemoryStore
 
 class KarmaServiceTests(unittest.TestCase):
     def setUp(self) -> None:
+        self.actor_token = set_current_actor("owner")
         self.store = InMemoryStore()
         self.service = KarmaService(
             store=self.store,
             identity=AssistantIdentity(name="Karma", tone="direct"),
         )
         self.universe = self.service.create_universe(UniverseCreate(name="Test Universe"))
+
+    def tearDown(self) -> None:
+        reset_current_actor(self.actor_token)
 
     def test_merch_design_creates_initial_version_with_snapshot_and_reference(self) -> None:
         asset = self.service.create_merch_design(

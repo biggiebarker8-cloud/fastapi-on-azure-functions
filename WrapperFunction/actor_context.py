@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from contextvars import ContextVar, Token
 
-_current_actor: ContextVar[str] = ContextVar("current_actor", default="owner")
+_current_actor: ContextVar[str] = ContextVar("current_actor", default="")
 
 
 def set_current_actor(actor: str) -> Token:
-    return _current_actor.set(actor or "owner")
+    return _current_actor.set(actor)
 
 
 def get_current_actor() -> str:
