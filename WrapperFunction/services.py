@@ -97,7 +97,13 @@ class KarmaService:
             raise HTTPException(status_code=400, detail=check.reason)
         character = Character(**payload.model_dump())
         character = self.store.add_character(character)
-        self._add_asset("character", character.id, character.universe_id, {"name": character.name})
+        self._add_asset(
+            "character",
+            character.id,
+            character.universe_id,
+            {"name": character.name},
+            initial_summary=f"Character created: {character.name}",
+        )
         return character
 
     def create_story(self, payload: StoryCreate) -> Story:
@@ -129,7 +135,13 @@ class KarmaService:
             continuity_notes=continuity_notes,
         )
         story = self.store.add_story(story)
-        self._add_asset("story", story.id, story.universe_id, {"title": story.title})
+        self._add_asset(
+            "story",
+            story.id,
+            story.universe_id,
+            {"title": story.title},
+            initial_summary=f"Story created: {story.title}",
+        )
         return story
 
     def create_merch_design(self, payload: MerchDesignCreate) -> Asset:
@@ -158,8 +170,8 @@ class KarmaService:
             reference_id=f"{payload.product_type}:{payload.universe_id}",
             universe_id=payload.universe_id,
             metadata=payload.model_dump(),
+            initial_summary=summary,
         )
-        self.store.append_asset_version(asset.id, summary)
         return self.store.assets[asset.id]
 
     def edit_image(self, payload: ImageEditRequest) -> Asset:
@@ -181,22 +193,31 @@ class KarmaService:
             reference_id=payload.source_asset_id,
             universe_id=payload.universe_id,
             metadata=payload.model_dump(),
+            initial_summary=summary,
         )
-        self.store.append_asset_version(asset.id, summary)
         return self.store.assets[asset.id]
 
     def restore_asset_version(self, asset_id: str, version: int) -> Asset:
         asset = self.store.assets.get(asset_id)
         if not asset:
             raise HTTPException(status_code=404, detail="Asset not found.")
-        available_versions = {item.version for item in asset.versions}
-        if version not in available_versions:
+        version_map = {item.version: item for item in asset.versions}
+        selected_version = version_map.get(version)
+        if not selected_version:
             raise HTTPException(status_code=404, detail="Version not found.")
+        asset.metadata = dict(selected_version.metadata_snapshot)
         summary = f"Restored to version {version}"
-        self.store.append_asset_version(asset_id, summary)
+        self.store.append_asset_version(asset_id, summary, metadata_snapshot=dict(asset.metadata))
         return self.store.assets[asset_id]
 
-    def _add_asset(self, asset_type: str, reference_id: str, universe_id: str, metadata: dict) -> Asset:
+    def _add_asset(
+        self,
+        asset_type: str,
+        reference_id: str,
+        universe_id: str,
+        metadata: dict,
+        initial_summary: str | None = None,
+    ) -> Asset:
         asset = Asset(
             asset_type=asset_type,
             reference_id=reference_id,
@@ -204,4 +225,6 @@ class KarmaService:
             metadata=metadata,
         )
         self.store.add_asset(asset)
+        if initial_summary:
+            self.store.append_asset_version(asset.id, initial_summary, metadata_snapshot=dict(metadata))
         return asset

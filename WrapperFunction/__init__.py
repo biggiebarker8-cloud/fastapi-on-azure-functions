@@ -85,42 +85,42 @@ async def get_name(name: str):
     return {"name": name}
 
 
-@app.get("/identity")
+@app.get("/identity", dependencies=[Depends(require_auth)])
 async def get_identity():
     return service.identity
 
 
-@app.put("/identity")
+@app.put("/identity", dependencies=[Depends(require_auth)])
 async def update_identity(name: str | None = None, tone: str | None = None, lore: str | None = None):
     return service.set_identity(name=name, tone=tone, lore=lore)
 
 
-@app.get("/preferences")
+@app.get("/preferences", dependencies=[Depends(require_auth)])
 async def get_preferences():
     return store.preferences
 
 
-@app.put("/preferences")
+@app.put("/preferences", dependencies=[Depends(require_auth)])
 async def update_preferences(payload: PreferenceUpdate):
     return service.update_preferences(payload)
 
 
-@app.post("/structure-thought")
+@app.post("/structure-thought", dependencies=[Depends(require_auth)])
 async def structure_thought(payload: NonLinearThoughtRequest):
     return service.structure_non_linear_input(payload)
 
 
-@app.post("/universes")
+@app.post("/universes", dependencies=[Depends(require_auth)])
 async def create_universe(payload: UniverseCreate):
     return service.create_universe(payload)
 
 
-@app.get("/universes")
+@app.get("/universes", dependencies=[Depends(require_auth)])
 async def list_universes():
     return list(store.universes.values())
 
 
-@app.get("/universes/{universe_id}")
+@app.get("/universes/{universe_id}", dependencies=[Depends(require_auth)])
 async def get_universe(universe_id: str):
     universe = store.universes.get(universe_id)
     if not universe:
@@ -128,12 +128,12 @@ async def get_universe(universe_id: str):
     return universe
 
 
-@app.post("/characters")
+@app.post("/characters", dependencies=[Depends(require_auth)])
 async def create_character(payload: CharacterCreate):
     return service.create_character(payload)
 
 
-@app.get("/characters")
+@app.get("/characters", dependencies=[Depends(require_auth)])
 async def list_characters(universe_id: str | None = None):
     values = list(store.characters.values())
     if not universe_id:
@@ -141,12 +141,12 @@ async def list_characters(universe_id: str | None = None):
     return [item for item in values if item.universe_id == universe_id]
 
 
-@app.post("/stories")
+@app.post("/stories", dependencies=[Depends(require_auth)])
 async def create_story(payload: StoryCreate):
     return service.create_story(payload)
 
 
-@app.get("/stories")
+@app.get("/stories", dependencies=[Depends(require_auth)])
 async def list_stories(universe_id: str | None = None):
     values = list(store.stories.values())
     if not universe_id:
@@ -154,17 +154,17 @@ async def list_stories(universe_id: str | None = None):
     return [item for item in values if item.universe_id == universe_id]
 
 
-@app.post("/merch-designs")
+@app.post("/merch-designs", dependencies=[Depends(require_auth)])
 async def create_merch_design(payload: MerchDesignCreate):
     return service.create_merch_design(payload)
 
 
-@app.post("/image-edits")
+@app.post("/image-edits", dependencies=[Depends(require_auth)])
 async def edit_image(payload: ImageEditRequest):
     return service.edit_image(payload)
 
 
-@app.get("/assets")
+@app.get("/assets", dependencies=[Depends(require_auth)])
 async def list_assets(universe_id: str | None = None):
     values = list(store.assets.values())
     if not universe_id:
@@ -172,7 +172,7 @@ async def list_assets(universe_id: str | None = None):
     return [item for item in values if item.universe_id == universe_id]
 
 
-@app.get("/assets/{asset_id}")
+@app.get("/assets/{asset_id}", dependencies=[Depends(require_auth)])
 async def get_asset(asset_id: str):
     asset = store.assets.get(asset_id)
     if not asset:
@@ -180,6 +180,6 @@ async def get_asset(asset_id: str):
     return asset
 
 
-@app.post("/assets/{asset_id}/versions/{version}/restore")
+@app.post("/assets/{asset_id}/versions/{version}/restore", dependencies=[Depends(require_auth)])
 async def restore_asset(asset_id: str, version: int):
     return service.restore_asset_version(asset_id, version)

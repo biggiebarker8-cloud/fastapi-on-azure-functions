@@ -218,4 +218,5 @@ This sample now includes additional API routes for a creative assistant profile 
 - `POST /image-edits` for image-edit requests against existing assets
 - `GET /assets`, `GET /assets/{asset_id}`, and `POST /assets/{asset_id}/versions/{version}/restore` for asset version history
 
-These routes use an in-memory store intended as scaffolding for a future persistent backend.
+Important: these routes currently use process-local in-memory state, so data resets on restart and is not shared across scaled-out instances.
+They are intended as scaffolding for a future persistent backend.
