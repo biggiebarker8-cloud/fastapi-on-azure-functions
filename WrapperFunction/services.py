@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from datetime import datetime, timezone
+from uuid import uuid4
 
 from fastapi import HTTPException
 
@@ -147,11 +148,12 @@ class KarmaService:
             f"{payload.product_type} design in {payload.print_area} area; "
             f"theme='{payload.theme_prompt}', variants={payload.variants}, exports={payload.export_formats}"
         )
+        design_reference_id = f"design_{uuid4().hex[:12]}"
         asset = self._add_asset(
             "merch_design",
-            reference_id=f"{payload.product_type}:{payload.universe_id}",
+            reference_id=design_reference_id,
             universe_id=payload.universe_id,
-            metadata=payload.model_dump(),
+            metadata={**payload.model_dump(), "design_reference_id": design_reference_id},
         )
         self.store.append_asset_version(asset.id, summary)
         return self.store.assets[asset.id]
@@ -188,6 +190,7 @@ class KarmaService:
             raise HTTPException(status_code=404, detail="Version not found.")
         selected_version = next(item for item in asset.versions if item.version == version)
         asset.metadata = deepcopy(selected_version.metadata_snapshot)
+        asset.updated_at = datetime.now(timezone.utc).isoformat()
         summary = f"Restored to version {version}"
         self.store.append_asset_version(asset_id, summary, metadata_snapshot=asset.metadata)
         return self.store.assets[asset_id]
