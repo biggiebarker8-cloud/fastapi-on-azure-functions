@@ -31,9 +31,9 @@ class KarmaService:
 
     def set_identity(self, name: str | None = None, tone: str | None = None, lore: str | None = None) -> AssistantIdentity:
         with self.store.lock:
-            if name:
+            if name is not None:
                 self.identity.name = name
-            if tone:
+            if tone is not None:
                 self.identity.tone = tone
             if lore is not None:
                 self.identity.lore = lore
@@ -166,7 +166,7 @@ class KarmaService:
 
             summary = (
                 f"{payload.product_type} design in {payload.print_area} area; "
-                f"theme='{payload.theme_prompt}', variants={payload.variants}, exports={payload.export_formats}"
+                f"{len(payload.variants)} variant(s), exports={payload.export_formats}"
             )
             asset = self._add_asset(
                 "merch_design",
@@ -191,7 +191,7 @@ class KarmaService:
             if not check.allowed:
                 raise HTTPException(status_code=400, detail=check.reason)
 
-            summary = f"{payload.operation}: {payload.instructions}"
+            summary = f"Image edit requested via {payload.operation}"
             asset = self._add_asset(
                 "image_edit",
                 reference_id=payload.source_asset_id,

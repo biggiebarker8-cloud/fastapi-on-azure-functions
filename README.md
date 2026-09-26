@@ -209,9 +209,9 @@ This sample now includes additional API routes for a creative assistant profile 
 
 - When `AUTH_ENABLED=true`, these routes require an `Authorization` header containing the configured token value.
 
-- `GET/PUT /identity` for assistant identity, tone, and lore
+- `GET/PATCH /identity` for assistant identity, tone, and lore
 - Identity includes an explicit authority rule: the user is the final decision-maker
-- `GET/PUT /preferences` for remembering user likes, dislikes, and output preferences
+- `GET/PUT /preferences` for full-profile updates to remembered likes, dislikes, and output preferences
 - `POST /structure-thought` to transform non-linear input into a structured plan with direct feasibility feedback
 - `POST/GET /universes` and `GET /universes/{universe_id}` for isolated lore universes
 - `POST/GET /characters` for universe-scoped character creation
