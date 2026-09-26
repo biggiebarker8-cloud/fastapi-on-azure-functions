@@ -116,18 +116,15 @@ async def get_name(name: str):
 
 
 @app.get("/identity", dependencies=[Depends(require_auth)])
-async def get_identity():
-    return service.identity
+async def get_identity(alias: str | None = None):
+    if alias is None:
+        return service.identity
+    return service.resolve_identity(alias)
 
 
 @app.patch("/identity", dependencies=[Depends(require_auth)])
 async def update_identity(payload: IdentityUpdate):
     return service.set_identity(**payload.model_dump(exclude_unset=True))
-
-
-@app.get("/assistant/identity", dependencies=[Depends(require_auth)])
-async def get_identity_by_name(alias: str):
-    return service.resolve_identity(alias)
 
 
 @app.get("/preferences", dependencies=[Depends(require_auth)])
