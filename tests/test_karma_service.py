@@ -134,6 +134,24 @@ class KarmaServiceTests(unittest.TestCase):
         enabled = self.service.toggle_plugin(plugin.id, PluginToggleRequest(enabled=True, requested_by="owner"))
         self.assertEqual(enabled.lifecycle_state, "enabled")
 
+    def test_default_social_and_research_plugins_are_seeded(self) -> None:
+        plugin_ids = set(self.store.plugins)
+        self.assertIn("plugin_facebook_pages", plugin_ids)
+        self.assertIn("plugin_instagram_business", plugin_ids)
+        self.assertIn("plugin_web_research", plugin_ids)
+
+        facebook = self.store.plugins["plugin_facebook_pages"]
+        instagram = self.store.plugins["plugin_instagram_business"]
+        web_research = self.store.plugins["plugin_web_research"]
+
+        self.assertEqual(facebook.lifecycle_state, "draft")
+        self.assertEqual(instagram.lifecycle_state, "draft")
+        self.assertEqual(web_research.lifecycle_state, "draft")
+        self.assertTrue(facebook.external_api_access)
+        self.assertTrue(instagram.external_api_access)
+        self.assertTrue(web_research.external_api_access)
+        self.assertEqual(web_research.config["platform"], "open-web")
+
     def test_plugin_cannot_enable_without_approved_request(self) -> None:
         plugin = self.service.draft_plugin(
             PluginDraftCreate(

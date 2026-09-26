@@ -26,6 +26,69 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def load_default_plugins() -> dict[str, Plugin]:
+    facebook = Plugin(
+        id="plugin_facebook_pages",
+        name="facebook-pages",
+        owner="owner",
+        plugin_type="integration",
+        version="0.1.0",
+        capabilities=["read_data", "write_data", "generate_content", "use_external_api"],
+        external_api_access=True,
+        config={
+            "platform": "facebook",
+            "launch_surface": "browser",
+            "recommended_auth": "facebook-page-access-token",
+            "default_features": ["page-post-drafts", "comment-triage", "insights-review"],
+            "base_url": "https://www.facebook.com/",
+        },
+        lifecycle_state="draft",
+        validation_notes=["Seeded scaffold for browser-launched social publishing flows."],
+        secret_scope="plugin/plugin_facebook_pages/vault",
+    )
+    instagram = Plugin(
+        id="plugin_instagram_business",
+        name="instagram-business",
+        owner="owner",
+        plugin_type="integration",
+        version="0.1.0",
+        capabilities=["read_data", "write_data", "generate_content", "use_external_api"],
+        external_api_access=True,
+        config={
+            "platform": "instagram",
+            "launch_surface": "browser",
+            "recommended_auth": "instagram-graph-access-token",
+            "default_features": ["caption-drafts", "dm-triage", "engagement-review"],
+            "base_url": "https://www.instagram.com/",
+        },
+        lifecycle_state="draft",
+        validation_notes=["Seeded scaffold for browser-launched social publishing flows."],
+        secret_scope="plugin/plugin_instagram_business/vault",
+    )
+    web_research = Plugin(
+        id="plugin_web_research",
+        name="web-research",
+        owner="owner",
+        plugin_type="automation",
+        version="0.1.0",
+        capabilities=["read_data", "generate_content", "analyze_metrics", "use_external_api"],
+        external_api_access=True,
+        config={
+            "platform": "open-web",
+            "launch_surface": "browser",
+            "default_features": ["source-discovery", "fact-gathering", "trend-scan"],
+            "base_url": "https://www.bing.com/",
+        },
+        lifecycle_state="draft",
+        validation_notes=[
+            "Seeded scaffold for assisted web research.",
+            "Requires explicit credentials, validation, and approval before live external access.",
+        ],
+        secret_scope="plugin/plugin_web_research/vault",
+    )
+    return {plugin.id: plugin for plugin in (facebook, instagram, web_research)}
+
+
 class InMemoryStore:
     def __init__(self) -> None:
         self.lock = RLock()
@@ -35,7 +98,7 @@ class InMemoryStore:
         self.assets: dict[str, Asset] = {}
         self.knowledge_bases: dict[str, KnowledgeBaseEntry] = load_default_knowledge_bases()
         self.preferences: UserPreferenceProfile = UserPreferenceProfile()
-        self.plugins: dict[str, Plugin] = {}
+        self.plugins: dict[str, Plugin] = load_default_plugins()
         self.skills: dict[str, Skill] = {}
         self.approvals: dict[str, ApprovalRequest] = {}
         self.learning_events: dict[str, LearningEvent] = {}
