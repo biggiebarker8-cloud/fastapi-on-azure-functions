@@ -1,18 +1,31 @@
 import os
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Body, Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from .actor_context import get_current_actor, reset_current_actor, set_current_actor
 from .config import ASSISTANT_AUTHORITY_RULE, ASSISTANT_NAME, ASSISTANT_STYLE
 from .models import (
+    ApprovalDecision,
+    ApprovalRequestCreate,
     AssistantIdentity,
     CharacterCreate,
     ImageEditRequest,
     IdentityUpdate,
+    LearningEventCreate,
+    LearningPolicyUpdate,
     MerchDesignCreate,
     NonLinearThoughtRequest,
+    PlaybookCreate,
     PreferenceUpdate,
+    PluginDraftCreate,
+    PluginKillRequest,
+    PluginRollbackRequest,
+    PluginToggleRequest,
+    PluginVersionUpdate,
+    SkillCreate,
+    SkillToggleRequest,
     StoryCreate,
     UniverseCreate,
 )
@@ -41,6 +54,7 @@ ALLOWED_HEADERS = _get_list_env("CORS_ALLOW_HEADERS", "*")
 
 app = FastAPI(title=APP_NAME)
 bearer_scheme = HTTPBearer(auto_error=False)
+
 store = InMemoryStore()
 service = KarmaService(
     store=store,
@@ -60,19 +74,28 @@ app.add_middleware(
 )
 
 
-async def require_auth(credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme)):
-    if not AUTH_ENABLED:
-        return
-    if not AUTH_BEARER_TOKEN:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="AUTH_BEARER_TOKEN is required when AUTH_ENABLED is true.",
-        )
-    if credentials is None or credentials.credentials != AUTH_BEARER_TOKEN:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or missing bearer token.",
-        )
+async def require_auth(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+):
+    if AUTH_ENABLED:
+        if not AUTH_BEARER_TOKEN:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="AUTH_BEARER_TOKEN is required when AUTH_ENABLED is true.",
+            )
+        if credentials is None or credentials.credentials != AUTH_BEARER_TOKEN:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or missing bearer token.",
+            )
+
+    actor_id = request.headers.get("X-Actor-Id", "owner") if not AUTH_ENABLED else "owner"
+    token = set_current_actor(actor_id)
+    try:
+        yield
+    finally:
+        reset_current_actor(token)
 
 
 @app.get("/sample", dependencies=[Depends(require_auth)])
@@ -97,7 +120,8 @@ async def update_identity(payload: IdentityUpdate):
 
 @app.get("/preferences", dependencies=[Depends(require_auth)])
 async def get_preferences():
-    return store.preferences
+    with store.lock:
+        return store.preferences
 
 
 @app.put("/preferences", dependencies=[Depends(require_auth)])
@@ -110,6 +134,135 @@ async def structure_thought(payload: NonLinearThoughtRequest):
     return service.structure_non_linear_input(payload)
 
 
+@app.get("/knowledge-bases", dependencies=[Depends(require_auth)])
+async def list_knowledge_bases():
+    return service.list_knowledge_bases()
+
+
+@app.get("/knowledge-bases/{knowledge_base_id}", dependencies=[Depends(require_auth)])
+async def get_knowledge_base(knowledge_base_id: str):
+    return service.get_knowledge_base(knowledge_base_id)
+
+
+@app.post("/plugins/drafts", dependencies=[Depends(require_auth)])
+async def create_plugin_draft(payload: PluginDraftCreate):
+    return service.draft_plugin(payload)
+
+
+@app.get("/plugins", dependencies=[Depends(require_auth)])
+async def list_plugins():
+    with store.lock:
+        return list(store.plugins.values())
+
+
+@app.post("/plugins/{plugin_id}/validate", dependencies=[Depends(require_auth)])
+async def validate_plugin(plugin_id: str):
+    return service.validate_plugin(plugin_id)
+
+
+@app.post("/plugins/{plugin_id}/staging-test", dependencies=[Depends(require_auth)])
+async def stage_plugin(plugin_id: str):
+    return service.stage_plugin(plugin_id)
+
+
+@app.post("/plugins/{plugin_id}/approval-request", dependencies=[Depends(require_auth)])
+async def submit_plugin_approval(plugin_id: str, reason: str = Body(default="", embed=True)):
+    return service.submit_plugin_for_approval(plugin_id, reason=reason)
+
+
+@app.patch("/plugins/{plugin_id}/version", dependencies=[Depends(require_auth)])
+async def update_plugin_version(plugin_id: str, payload: PluginVersionUpdate):
+    return service.update_plugin_version(plugin_id, payload)
+
+
+@app.patch("/plugins/{plugin_id}/enabled", dependencies=[Depends(require_auth)])
+async def toggle_plugin(plugin_id: str, payload: PluginToggleRequest):
+    return service.toggle_plugin(plugin_id, payload)
+
+
+@app.post("/plugins/{plugin_id}/rollback", dependencies=[Depends(require_auth)])
+async def rollback_plugin(plugin_id: str, payload: PluginRollbackRequest):
+    return service.rollback_plugin(plugin_id, payload)
+
+
+@app.post("/plugins/{plugin_id}/kill", dependencies=[Depends(require_auth)])
+async def kill_plugin(plugin_id: str, payload: PluginKillRequest):
+    return service.kill_plugin(plugin_id, payload)
+
+
+@app.post("/skills", dependencies=[Depends(require_auth)])
+async def create_skill(payload: SkillCreate):
+    return service.create_skill(payload)
+
+
+@app.get("/skills", dependencies=[Depends(require_auth)])
+async def list_skills():
+    with store.lock:
+        return list(store.skills.values())
+
+
+@app.patch("/skills/{skill_id}/enabled", dependencies=[Depends(require_auth)])
+async def toggle_skill(skill_id: str, payload: SkillToggleRequest):
+    return service.toggle_skill(skill_id, payload)
+
+
+@app.post("/approvals", dependencies=[Depends(require_auth)])
+async def create_approval(payload: ApprovalRequestCreate):
+    return service.create_approval_request(payload)
+
+
+@app.get("/approvals", dependencies=[Depends(require_auth)])
+async def list_approvals(status_filter: str | None = None):
+    with store.lock:
+        values = list(store.approvals.values())
+    if not status_filter:
+        return values
+    return [item for item in values if item.status == status_filter]
+
+
+@app.post("/approvals/{approval_id}/decision", dependencies=[Depends(require_auth)])
+async def decide_approval(approval_id: str, payload: ApprovalDecision):
+    return service.decide_approval(approval_id, payload)
+
+
+@app.post("/learning/events", dependencies=[Depends(require_auth)])
+async def create_learning_event(payload: LearningEventCreate):
+    return service.record_learning_event(payload)
+
+
+@app.get("/learning/events", dependencies=[Depends(require_auth)])
+async def list_learning_events():
+    with store.lock:
+        return list(store.learning_events.values())
+
+
+@app.post("/playbooks", dependencies=[Depends(require_auth)])
+async def create_playbook(payload: PlaybookCreate):
+    return service.propose_playbook(payload)
+
+
+@app.get("/playbooks", dependencies=[Depends(require_auth)])
+async def list_playbooks():
+    with store.lock:
+        return list(store.playbooks.values())
+
+
+@app.post("/learning/policy/approval-request", dependencies=[Depends(require_auth)])
+async def request_learning_policy_change(reason: str = Body(default="", embed=True)):
+    return service.request_learning_policy_change(reason=reason)
+
+
+@app.get("/learning/policy", dependencies=[Depends(require_auth)])
+async def get_learning_policy():
+    with store.lock:
+        return store.learning_policy
+
+
+@app.put("/learning/policy", dependencies=[Depends(require_auth)])
+async def update_learning_policy(payload: LearningPolicyUpdate):
+    return service.update_learning_policy(payload)
+
+
 @app.post("/universes", dependencies=[Depends(require_auth)])
 async def create_universe(payload: UniverseCreate):
     return service.create_universe(payload)
@@ -117,12 +270,14 @@ async def create_universe(payload: UniverseCreate):
 
 @app.get("/universes", dependencies=[Depends(require_auth)])
 async def list_universes():
-    return list(store.universes.values())
+    with store.lock:
+        return list(store.universes.values())
 
 
 @app.get("/universes/{universe_id}", dependencies=[Depends(require_auth)])
 async def get_universe(universe_id: str):
-    universe = store.universes.get(universe_id)
+    with store.lock:
+        universe = store.universes.get(universe_id)
     if not universe:
         raise HTTPException(status_code=404, detail="Universe not found.")
     return universe
@@ -135,7 +290,8 @@ async def create_character(payload: CharacterCreate):
 
 @app.get("/characters", dependencies=[Depends(require_auth)])
 async def list_characters(universe_id: str | None = None):
-    values = list(store.characters.values())
+    with store.lock:
+        values = list(store.characters.values())
     if not universe_id:
         return values
     return [item for item in values if item.universe_id == universe_id]
@@ -148,7 +304,8 @@ async def create_story(payload: StoryCreate):
 
 @app.get("/stories", dependencies=[Depends(require_auth)])
 async def list_stories(universe_id: str | None = None):
-    values = list(store.stories.values())
+    with store.lock:
+        values = list(store.stories.values())
     if not universe_id:
         return values
     return [item for item in values if item.universe_id == universe_id]
@@ -166,7 +323,8 @@ async def edit_image(payload: ImageEditRequest):
 
 @app.get("/assets", dependencies=[Depends(require_auth)])
 async def list_assets(universe_id: str | None = None):
-    values = list(store.assets.values())
+    with store.lock:
+        values = list(store.assets.values())
     if not universe_id:
         return values
     return [item for item in values if item.universe_id == universe_id]
@@ -174,7 +332,8 @@ async def list_assets(universe_id: str | None = None):
 
 @app.get("/assets/{asset_id}", dependencies=[Depends(require_auth)])
 async def get_asset(asset_id: str):
-    asset = store.assets.get(asset_id)
+    with store.lock:
+        asset = store.assets.get(asset_id)
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found.")
     return asset
