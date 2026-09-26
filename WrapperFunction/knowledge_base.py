@@ -252,9 +252,222 @@ def load_default_knowledge_bases() -> dict[str, KnowledgeBaseEntry]:
             "https://www.w3.org/WAI/",
         ],
     )
+    shopify = KnowledgeBaseEntry(
+        id="shopify",
+        title="Shopify complete knowledge base",
+        summary="Comprehensive Shopify guide for store setup, growth operations, conversion, and analytics at scale.",
+        aliases=["shopify-store", "shopify-plus", "shopify-commerce"],
+        tags=["ecommerce", "storefront", "checkout", "retention", "analytics", "operations"],
+        sections=[
+            KnowledgeBaseSection(
+                heading="Platform and store setup",
+                points=[
+                    "Shopify supports fast launch paths for direct-to-consumer storefronts with integrated payments and hosting.",
+                    "Set up core store objects first: products, collections, navigation, policies, and checkout settings.",
+                    "Choose a theme that prioritizes speed, conversion clarity, and mobile usability from day one.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Catalog and merchandising",
+                points=[
+                    "Create standardized product data with clear titles, attributes, variant logic, and media guidelines.",
+                    "Use collection architecture to support both discovery browsing and campaign-specific landing pathways.",
+                    "Apply pricing, bundles, and promotional logic consistently across product and checkout surfaces.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Checkout, payments, and fulfillment",
+                points=[
+                    "Reduce checkout friction with streamlined fields, clear shipping expectations, and trusted payment methods.",
+                    "Configure tax and shipping profiles carefully to avoid margin leakage and post-purchase support load.",
+                    "Align fulfillment SLAs, inventory synchronization, and return workflows with customer communication.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Growth and acquisition",
+                points=[
+                    "Drive acquisition through channel mix testing across paid social, search, email capture, and affiliates.",
+                    "Use campaign-specific landing pages with clear offer framing and consistency from ad-to-product page.",
+                    "Measure contribution margin, not just top-line revenue, when scaling paid channels.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Retention and lifecycle",
+                points=[
+                    "Use segmentation for win-back, post-purchase education, replenishment, and cross-sell automations.",
+                    "Improve repeat purchase rates with loyalty mechanisms, bundles, and personalized recommendations.",
+                    "Track customer lifetime value by cohort to guide channel spend and merchandising priorities.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Store analytics and experimentation",
+                points=[
+                    "Track funnel metrics across sessions, add-to-cart, checkout start, purchase completion, and repeat orders.",
+                    "Monitor average order value, conversion rate, return rate, and net revenue after discounts and refunds.",
+                    "Run controlled experiments on product pages, offers, and checkout UX with clear hypotheses.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Operations and scaling",
+                points=[
+                    "Document operating playbooks for merchandising, incident response, catalog QA, and launch governance.",
+                    "Integrate ERP, CRM, and support tooling while preserving source-of-truth ownership for product data.",
+                    "For larger merchants, Shopify Plus capabilities can support advanced B2B and multi-market operations.",
+                ],
+            ),
+        ],
+        references=[
+            "https://www.shopify.com/",
+            "https://help.shopify.com/",
+            "https://www.shopify.com/plus",
+        ],
+    )
+    amazon = KnowledgeBaseEntry(
+        id="amazon",
+        title="Amazon complete knowledge base",
+        summary="Comprehensive Amazon commerce guide for marketplace operations, advertising, catalog health, and growth analytics.",
+        aliases=["amazon-seller", "amazon-marketplace", "seller-central"],
+        tags=["marketplace", "fba", "catalog", "ads", "profitability", "analytics"],
+        sections=[
+            KnowledgeBaseSection(
+                heading="Marketplace foundations",
+                points=[
+                    "Amazon selling models include third-party marketplace operations with Seller Central account management.",
+                    "Winning on Amazon depends on listing quality, price competitiveness, inventory reliability, and service metrics.",
+                    "Define a channel strategy that separates marketplace goals from owned-store goals and margin constraints.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Catalog and listing optimization",
+                points=[
+                    "Build high-quality listings with strong title structure, keyword intent, rich media, and persuasive bullets.",
+                    "Maintain variation families and attribute completeness to improve discoverability and conversion performance.",
+                    "Track content suppression risks and policy compliance to prevent hidden or inactive detail pages.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Fulfillment and logistics",
+                points=[
+                    "Evaluate FBA versus seller-fulfilled approaches based on margins, control, and service-level needs.",
+                    "Inventory health depends on demand forecasting, reorder points, and aging stock mitigation.",
+                    "Operational reliability includes prep standards, inbound planning, and returns triage discipline.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Advertising and demand generation",
+                points=[
+                    "Use Sponsored Products, Sponsored Brands, and Sponsored Display with portfolio-level budget governance.",
+                    "Campaign structure should separate branded, category, and competitor intent for optimization clarity.",
+                    "Manage bids and negatives with profitability thresholds rather than click volume alone.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Ranking and Buy Box dynamics",
+                points=[
+                    "Search rank signals include relevance, conversion velocity, pricing, and listing performance consistency.",
+                    "Buy Box outcomes are influenced by price, availability, fulfillment type, and seller performance metrics.",
+                    "Sustained rank gains require balancing velocity campaigns with margin protection and stock stability.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Compliance and account health",
+                points=[
+                    "Monitor account health dashboards for policy warnings, late shipment risks, and return defect trends.",
+                    "Maintain defensible documentation for authenticity, product safety, and restricted category requirements.",
+                    "Build SOPs for policy incident response and escalation pathways to reduce listing downtime.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Amazon analytics and decisioning",
+                points=[
+                    "Track sessions, unit session percentage, conversion, TACoS, ACoS, contribution margin, and return burden.",
+                    "Use cohort and SKU-level analysis to identify profitable growth versus ad-dependent revenue spikes.",
+                    "Integrate ad metrics with organic sales and inventory data for full-funnel optimization decisions.",
+                ],
+            ),
+        ],
+        references=[
+            "https://sell.amazon.com/",
+            "https://sellercentral.amazon.com/",
+            "https://advertising.amazon.com/",
+        ],
+    )
+    sales_strategies_analytics = KnowledgeBaseEntry(
+        id="sales-strategies-analytics",
+        title="Sales strategies and analytics knowledge base",
+        summary="End-to-end playbook for revenue strategy, funnel design, experimentation, and analytics-driven growth.",
+        aliases=["sales-analytics", "growth-strategy", "revenue-analytics"],
+        tags=["sales", "strategy", "analytics", "experimentation", "forecasting", "retention"],
+        sections=[
+            KnowledgeBaseSection(
+                heading="Go-to-market strategy",
+                points=[
+                    "Clarify target segments, positioning, core offer, and channel fit before scaling acquisition spend.",
+                    "Align pricing and packaging to customer value perception and margin requirements.",
+                    "Define leading and lagging indicators for each stage of the demand funnel.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Funnel architecture and conversion",
+                points=[
+                    "Map awareness, consideration, conversion, and retention stages with measurable transition events.",
+                    "Identify top drop-off points and prioritize fixes with highest revenue impact per effort.",
+                    "Use persuasive proof elements such as testimonials, guarantees, and case studies near decisions.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Sales operations and enablement",
+                points=[
+                    "Standardize lead qualification criteria and handoff rules between marketing and sales teams.",
+                    "Build repeatable playbooks for outreach, objection handling, and deal progression stages.",
+                    "Create a closed-loop feedback process from sales conversations back to product and messaging.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Measurement framework",
+                points=[
+                    "Track CAC, payback period, LTV, conversion rates, average order value, and gross margin by channel.",
+                    "Use cohort reporting to separate one-time campaign spikes from durable performance improvements.",
+                    "Enforce metric definitions and data governance so teams make decisions from consistent numbers.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Experimentation and optimization",
+                points=[
+                    "Prioritize tests by expected impact, confidence, and implementation complexity.",
+                    "Define hypotheses, success metrics, and stopping criteria before launching experiments.",
+                    "Roll out winning experiments with monitoring to catch regressions after scale-up.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Forecasting and planning",
+                points=[
+                    "Use scenario planning (base, upside, downside) to guide inventory, budget, and staffing decisions.",
+                    "Connect demand forecasts to supply and fulfillment capacity to prevent service-level breakdowns.",
+                    "Re-forecast on a fixed cadence with variance analysis and corrective actions.",
+                ],
+            ),
+            KnowledgeBaseSection(
+                heading="Executive analytics and reporting",
+                points=[
+                    "Build dashboards by audience: operators need diagnostics; executives need trend and risk visibility.",
+                    "Include anomaly detection and contextual notes to reduce misinterpretation of volatile metrics.",
+                    "Tie every dashboard to explicit decisions it is intended to support.",
+                ],
+            ),
+        ],
+        references=[
+            "https://www.shopify.com/enterprise/ecommerce-marketing",
+            "https://advertising.amazon.com/library/guides",
+            "https://web.dev/case-studies/",
+        ],
+    )
     return {
         bytedanabe.id: bytedanabe,
         lark.id: lark,
         wix.id: wix,
         website_building.id: website_building,
+        shopify.id: shopify,
+        amazon.id: amazon,
+        sales_strategies_analytics.id: sales_strategies_analytics,
     }

@@ -215,7 +215,7 @@ This sample now includes additional API routes for a creative assistant profile 
 - `POST /structure-thought` to transform non-linear input into a structured plan with direct feasibility feedback
 - `GET /knowledge-bases` to list built-in knowledge bases
 - `GET /knowledge-bases/{knowledge_base_id}` to retrieve a specific knowledge base (including alias lookup, for example `bytedance` -> `bytedanabe`)
-- Built-in knowledge bases now include `bytedanabe`, `lark`, `wix`, and `website-building` (with broad website-building guidance)
+- Built-in knowledge bases now include `bytedanabe`, `lark`, `wix`, `website-building`, `shopify`, `amazon`, and `sales-strategies-analytics`
 - `POST/GET /universes` and `GET /universes/{universe_id}` for isolated lore universes
 - `POST/GET /characters` for universe-scoped character creation
 - `POST/GET /stories` with continuity checks and optional crossover support
