@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Karma Browser Launcher
+Comment=Open the FastAPI on Azure Functions app in a browser
+Exec=sh -c 'if command -v microsoft-edge >/dev/null 2>&1; then microsoft-edge "${KARMA_APP_URL:-http://127.0.0.1:7071/sample}"; elif command -v xdg-open >/dev/null 2>&1; then xdg-open "${KARMA_APP_URL:-http://127.0.0.1:7071/sample}"; else python -m webbrowser "${KARMA_APP_URL:-http://127.0.0.1:7071/sample}"; fi'
+Icon=web-browser
+Terminal=false
+Categories=Development;Utility;
+Keywords=Karma;FastAPI;Azure Functions;Browser;
+StartupNotify=true

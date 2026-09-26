@@ -6,6 +6,12 @@ This template creates an Azure Functions project with FastAPI and demonstrates h
 
 Install Python 3.10, the Azure Functions Core Tools, and the dependencies from `requirements.txt`, then start the host with the Functions Core Tools.
 
+## Desktop launcher
+
+- The repository now includes `/home/runner/work/fastapi-on-azure-functions/fastapi-on-azure-functions/karma-browser.desktop` for launching the app from a Linux desktop into a browser.
+- It prefers Microsoft Edge when installed, then falls back to `xdg-open`, then Python's built-in browser launcher.
+- By default it opens `http://127.0.0.1:7071/sample`; override that target by setting `KARMA_APP_URL` before launching the desktop file.
+
 ## Testing in Azure
 
 After deployment, test these different paths on the deployed URL:
@@ -60,12 +66,14 @@ This sample now includes additional API routes for a creative assistant profile 
 - `POST /approvals`, `GET /approvals`, and `POST /approvals/{id}/decision` for explicit owner approval workflows
 - `POST /learning/events`, `GET /learning/events`, `POST /playbooks`, and `GET /playbooks` for self-learning event capture and playbook generation
 - `POST /learning/policy/approval-request`, `GET /learning/policy`, and `PUT /learning/policy` for approval-gated learning-policy changes (`auto_approve_low_risk_tuning`)
+- The in-memory store now seeds draft plugin scaffolds for `facebook-pages`, `instagram-business`, and `web-research`
 
 Lifecycle notes for approval-gated plugin flows:
 
 - Draft plugins must be validated and staged before `/plugins/{id}/approval-request` can succeed.
 - Plugins cannot be enabled while an approval decision is pending, and enablement requires an approved publish or update request.
 - Version updates are limited to already-live or rolled-back plugins; approved updates promote the plugin back to an enabled state.
+- The seeded social/browser plugins are scaffolding only: they do not ship credentials or autonomous live internet learning, and must still be configured and approved before production use.
 
 Calling the restore endpoint is intentionally non-idempotent: each call creates additional version-history entries (checkpoint + restore event).
 
