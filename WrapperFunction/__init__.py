@@ -116,9 +116,12 @@ async def get_name(name: str):
 
 
 @app.get("/identity", dependencies=[Depends(require_auth)])
-async def get_identity(alias: str | None = None):
-    if alias is None:
-        return service.identity
+async def get_identity():
+    return service.identity
+
+
+@app.get("/identity/resolve", dependencies=[Depends(require_auth)])
+async def resolve_identity(alias: str):
     return service.resolve_identity(alias)
 
 

@@ -212,8 +212,8 @@ To learn more about leveraging WSGI and ASGI-compatible frameworks, see [Web fra
 This sample now includes additional API routes for one assistant profile whose canonical name defaults to `Karma` and whose aliases can also include `Alliance Bot`:
 
 - `GET /identity` for the canonical assistant identity profile
+- `GET /identity/resolve?alias=...` to resolve `Karma`, `Alliance Bot`, or any configured alias to the same assistant profile
 - `PATCH /identity` to update assistant identity, tone, and lore
-- `GET /identity?alias=...` to resolve `Karma`, `Alliance Bot`, or any configured alias to the same assistant profile
 - Default lore now seeds canon where a great dragon sacrifices itself, leaves a dormant shard in Karma, Titan, and Onyx, and can reappear only through a limited revival trigger when bond, danger, and need align
 - Identity includes an explicit authority rule: the user is the final decision-maker
 - `GET/PUT /preferences` for remembering user likes, dislikes, and output preferences
