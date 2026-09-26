@@ -56,3 +56,16 @@ class InMemoryStore:
         asset.current_version = new_version
         asset.updated_at = _now_iso()
         return asset
+
+    def restore_asset_version(self, asset_id: str, version: int) -> Asset:
+        asset = self.assets[asset_id]
+        selected_version = next(item for item in asset.versions if item.version == version)
+        asset.metadata = deepcopy(selected_version.metadata_snapshot)
+        asset.reference_id = selected_version.reference_id_snapshot
+        return self.append_asset_version(
+            asset_id,
+            summary=f"Restored to version {version}",
+            metadata_snapshot=asset.metadata,
+            reference_id_snapshot=asset.reference_id,
+            restored_from_version=version,
+        )

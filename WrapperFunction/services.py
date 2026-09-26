@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from copy import deepcopy
-from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import HTTPException
@@ -188,19 +186,7 @@ class KarmaService:
         available_versions = {item.version for item in asset.versions}
         if version not in available_versions:
             raise HTTPException(status_code=404, detail="Version not found.")
-        selected_version = next(item for item in asset.versions if item.version == version)
-        asset.metadata = deepcopy(selected_version.metadata_snapshot)
-        asset.reference_id = selected_version.reference_id_snapshot
-        asset.updated_at = datetime.now(timezone.utc).isoformat()
-        summary = f"Restored to version {version}"
-        self.store.append_asset_version(
-            asset_id,
-            summary,
-            metadata_snapshot=asset.metadata,
-            reference_id_snapshot=asset.reference_id,
-            restored_from_version=version,
-        )
-        return self.store.assets[asset_id]
+        return self.store.restore_asset_version(asset_id, version)
 
     def _add_asset(self, asset_type: str, reference_id: str, universe_id: str, metadata: dict) -> Asset:
         asset = Asset(
