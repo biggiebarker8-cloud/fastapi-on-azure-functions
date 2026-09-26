@@ -3,7 +3,9 @@ import unittest
 from pydantic import ValidationError
 
 from fastapi import HTTPException
+from fastapi.testclient import TestClient
 
+from WrapperFunction.__init__ import app
 from WrapperFunction.actor_context import reset_current_actor, set_current_actor
 from WrapperFunction.models import (
     ApprovalDecision,
@@ -126,6 +128,12 @@ class AssistantServiceTests(unittest.TestCase):
             identity=AssistantIdentity(name="Karma", aliases=["Alliance Bot"], tone="direct"),
         )
         self.assertIsInstance(legacy_service, AssistantService)
+
+    def test_identity_alias_route_redirects_to_canonical_identity(self) -> None:
+        client = TestClient(app)
+        response = client.get("/assistant/identity/Alliance%20Bot", follow_redirects=False)
+        self.assertEqual(response.status_code, 307)
+        self.assertTrue(response.headers["location"].endswith("/identity"))
 
     def test_plugin_promotion_requires_owner_approval(self) -> None:
         plugin = self.service.draft_plugin(
