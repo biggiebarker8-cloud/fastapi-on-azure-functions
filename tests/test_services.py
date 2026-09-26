@@ -137,7 +137,7 @@ class KarmaServiceTests(unittest.TestCase):
         restored = self.service.restore_asset_version(asset.id, 1)
 
         self.assertEqual(restored.metadata["theme_prompt"], "v1")
-        self.assertEqual(restored.current_version, 3)
+        self.assertEqual(restored.current_version, 4)
         self.assertEqual(restored.versions[-1].source_version, 1)
 
 

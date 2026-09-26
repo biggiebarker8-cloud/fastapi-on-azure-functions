@@ -210,6 +210,13 @@ class KarmaService:
             selected_version = version_map.get(version)
             if not selected_version:
                 raise HTTPException(status_code=404, detail="Version not found.")
+            current_version_before_restore = asset.current_version
+            self.store.append_asset_version(
+                asset_id,
+                f"Checkpoint before restore to version {version}",
+                metadata_snapshot=dict(asset.metadata),
+                source_version=current_version_before_restore,
+            )
             asset.metadata = dict(selected_version.metadata_snapshot)
             if selected_version.reference_id_snapshot is not None:
                 asset.reference_id = selected_version.reference_id_snapshot

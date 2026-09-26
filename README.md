@@ -207,6 +207,8 @@ To learn more about leveraging WSGI and ASGI-compatible frameworks, see [Web fra
 
 This sample now includes additional API routes for a creative assistant profile named `Karma`:
 
+- When `AUTH_ENABLED=true`, these routes require an `Authorization` header containing the configured token value.
+
 - `GET/PUT /identity` for assistant identity, tone, and lore
 - Identity includes an explicit authority rule: the user is the final decision-maker
 - `GET/PUT /preferences` for remembering user likes, dislikes, and output preferences
@@ -217,6 +219,8 @@ This sample now includes additional API routes for a creative assistant profile 
 - `POST /merch-designs` for hoodie/t-shirt design workflow metadata
 - `POST /image-edits` for image-edit requests against existing assets
 - `GET /assets`, `GET /assets/{asset_id}`, and `POST /assets/{asset_id}/versions/{version}/restore` for asset version history
+
+Calling the restore endpoint is intentionally non-idempotent: each call creates additional version-history entries (checkpoint + restore event).
 
 Important: these routes currently use process-local in-memory state, so data resets on restart and is not shared across scaled-out instances.
 They are intended as scaffolding for a future persistent backend.
