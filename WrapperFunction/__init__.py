@@ -112,6 +112,16 @@ async def structure_thought(payload: NonLinearThoughtRequest):
     return service.structure_non_linear_input(payload)
 
 
+@app.get("/knowledge-bases", dependencies=[Depends(require_auth)])
+async def list_knowledge_bases():
+    return service.list_knowledge_bases()
+
+
+@app.get("/knowledge-bases/{knowledge_base_id}", dependencies=[Depends(require_auth)])
+async def get_knowledge_base(knowledge_base_id: str):
+    return service.get_knowledge_base(knowledge_base_id)
+
+
 @app.post("/universes", dependencies=[Depends(require_auth)])
 async def create_universe(payload: UniverseCreate):
     return service.create_universe(payload)

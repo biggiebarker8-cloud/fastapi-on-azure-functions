@@ -53,6 +53,62 @@ class KarmaApiRouteTests(unittest.TestCase):
         self.assertEqual(body["tone"], original["tone"])
         self.assertEqual(body["lore"], "new lore")
 
+    def test_knowledge_base_routes_return_seeded_entries(self):
+        wf.AUTH_ENABLED = False
+
+        response = self.client.get("/knowledge-bases")
+        self.assertEqual(response.status_code, 200)
+        ids = {item["id"] for item in response.json()}
+
+        self.assertIn("bytedanabe", ids)
+        self.assertIn("lark", ids)
+        self.assertIn("wix", ids)
+        self.assertIn("website-building", ids)
+        self.assertIn("shopify", ids)
+        self.assertIn("amazon", ids)
+        self.assertIn("sales-strategies-analytics", ids)
+
+    def test_knowledge_base_route_supports_alias_lookup(self):
+        wf.AUTH_ENABLED = False
+
+        response = self.client.get("/knowledge-bases/bytedance")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["id"], "bytedanabe")
+
+    def test_knowledge_base_route_returns_404_for_unknown_entry(self):
+        wf.AUTH_ENABLED = False
+
+        response = self.client.get("/knowledge-bases/unknown")
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["detail"], "Knowledge base not found.")
+
+    def test_knowledge_base_route_returns_wix_content(self):
+        wf.AUTH_ENABLED = False
+
+        response = self.client.get("/knowledge-bases/wix")
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+
+        self.assertEqual(body["id"], "wix")
+        self.assertTrue(any(section["heading"] == "Wix platform fundamentals" for section in body["sections"]))
+
+    def test_knowledge_base_route_returns_shopify_content(self):
+        wf.AUTH_ENABLED = False
+
+        response = self.client.get("/knowledge-bases/shopify")
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+
+        self.assertEqual(body["id"], "shopify")
+        self.assertTrue(any(section["heading"] == "Store analytics and experimentation" for section in body["sections"]))
+
+    def test_knowledge_base_route_supports_amazon_alias_lookup(self):
+        wf.AUTH_ENABLED = False
+
+        response = self.client.get("/knowledge-bases/seller-central")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["id"], "amazon")
+
     def test_characters_route_filters_by_universe(self):
         wf.AUTH_ENABLED = False
 

@@ -10,6 +10,7 @@ from .models import (
     Character,
     CharacterCreate,
     ImageEditRequest,
+    KnowledgeBaseEntry,
     MerchDesignCreate,
     NonLinearThoughtRequest,
     PreferenceUpdate,
@@ -230,6 +231,22 @@ class KarmaService:
                 source_version=version,
             )
             return self.store.assets[asset_id]
+
+    def list_knowledge_bases(self) -> list[KnowledgeBaseEntry]:
+        with self.store.lock:
+            return list(self.store.knowledge_bases.values())
+
+    def get_knowledge_base(self, knowledge_base_id: str) -> KnowledgeBaseEntry:
+        with self.store.lock:
+            knowledge_base = self.store.knowledge_bases.get(knowledge_base_id)
+            if knowledge_base:
+                return knowledge_base
+
+            aliases = {alias.lower(): item for item in self.store.knowledge_bases.values() for alias in item.aliases}
+            alias_match = aliases.get(knowledge_base_id.lower())
+            if alias_match:
+                return alias_match
+        raise HTTPException(status_code=404, detail="Knowledge base not found.")
 
     def _add_asset(
         self,

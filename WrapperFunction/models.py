@@ -144,6 +144,22 @@ class ModerationResult(BaseModel):
     reason: Optional[str] = None
 
 
+class KnowledgeBaseSection(BaseModel):
+    heading: str
+    points: List[str] = Field(default_factory=list)
+
+
+class KnowledgeBaseEntry(BaseModel):
+    id: str
+    title: str
+    summary: str
+    aliases: List[str] = Field(default_factory=list)
+    tags: List[str] = Field(default_factory=list)
+    sections: List[KnowledgeBaseSection] = Field(default_factory=list)
+    references: List[str] = Field(default_factory=list)
+    updated_at: str = Field(default_factory=_now_iso)
+
+
 class UserPreferenceProfile(BaseModel):
     likes: List[str] = Field(default_factory=list)
     dislikes: List[str] = Field(default_factory=list)
