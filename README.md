@@ -213,6 +213,8 @@ This sample now includes additional API routes for a creative assistant profile 
 - Identity includes an explicit authority rule: the user is the final decision-maker
 - `GET/PUT /preferences` for full-profile updates to remembered likes, dislikes, and output preferences
 - `POST /structure-thought` to transform non-linear input into a structured plan with direct feasibility feedback
+- `GET /knowledge-bases` to list built-in knowledge bases
+- `GET /knowledge-bases/{knowledge_base_id}` to retrieve a specific knowledge base (including alias lookup, for example `bytedance` -> `bytedanabe`)
 - `POST/GET /universes` and `GET /universes/{universe_id}` for isolated lore universes
 - `POST/GET /characters` for universe-scoped character creation
 - `POST/GET /stories` with continuity checks and optional crossover support

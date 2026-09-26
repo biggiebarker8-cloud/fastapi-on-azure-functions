@@ -53,6 +53,30 @@ class KarmaApiRouteTests(unittest.TestCase):
         self.assertEqual(body["tone"], original["tone"])
         self.assertEqual(body["lore"], "new lore")
 
+    def test_knowledge_base_routes_return_bytedanabe_and_lark(self):
+        wf.AUTH_ENABLED = False
+
+        response = self.client.get("/knowledge-bases")
+        self.assertEqual(response.status_code, 200)
+        ids = {item["id"] for item in response.json()}
+
+        self.assertIn("bytedanabe", ids)
+        self.assertIn("lark", ids)
+
+    def test_knowledge_base_route_supports_alias_lookup(self):
+        wf.AUTH_ENABLED = False
+
+        response = self.client.get("/knowledge-bases/bytedance")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["id"], "bytedanabe")
+
+    def test_knowledge_base_route_returns_404_for_unknown_entry(self):
+        wf.AUTH_ENABLED = False
+
+        response = self.client.get("/knowledge-bases/unknown")
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["detail"], "Knowledge base not found.")
+
     def test_characters_route_filters_by_universe(self):
         wf.AUTH_ENABLED = False
 
