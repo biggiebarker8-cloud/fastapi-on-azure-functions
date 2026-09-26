@@ -61,6 +61,12 @@ This sample now includes additional API routes for a creative assistant profile 
 - `POST /learning/events`, `GET /learning/events`, `POST /playbooks`, and `GET /playbooks` for self-learning event capture and playbook generation
 - `POST /learning/policy/approval-request`, `GET /learning/policy`, and `PUT /learning/policy` for approval-gated learning-policy changes (`auto_approve_low_risk_tuning`)
 
+Lifecycle notes for approval-gated plugin flows:
+
+- Draft plugins must be validated and staged before `/plugins/{id}/approval-request` can succeed.
+- Plugins cannot be enabled while an approval decision is pending, and enablement requires an approved publish or update request.
+- Version updates are limited to already-live or rolled-back plugins; approved updates promote the plugin back to an enabled state.
+
 Calling the restore endpoint is intentionally non-idempotent: each call creates additional version-history entries (checkpoint + restore event).
 
 For approval-gated routes, actor identity comes from the request context: when auth is disabled the service reads `X-Actor-Id`, and when auth is enabled it uses the authenticated owner context and ignores caller-supplied `requested_by` fields.

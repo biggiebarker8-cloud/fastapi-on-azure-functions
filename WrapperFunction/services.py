@@ -298,7 +298,7 @@ class KarmaService:
 
     def stage_plugin(self, plugin_id: str) -> Plugin:
         plugin = self._get_plugin_or_404(plugin_id)
-        if plugin.lifecycle_state not in {"validated", "disabled", "rolled_back"}:
+        if plugin.lifecycle_state not in {"validated", "disabled", "rolled_back", "enabled"}:
             raise HTTPException(status_code=400, detail="Plugin must be validated before staging.")
         with self.store.lock:
             plugin.lifecycle_state = "staged"
@@ -424,11 +424,7 @@ class KarmaService:
 
     def create_approval_request(self, payload: ApprovalRequestCreate) -> ApprovalRequest:
         approval_payload = payload.model_dump()
-        actor = get_current_actor()
-        if payload.required_owner_approval:
-            approval_payload["requested_by"] = self._current_actor()
-        elif actor:
-            approval_payload["requested_by"] = actor
+        approval_payload["requested_by"] = self._current_actor()
         approval = ApprovalRequest(**approval_payload)
         return self.store.add_approval(approval)
 
