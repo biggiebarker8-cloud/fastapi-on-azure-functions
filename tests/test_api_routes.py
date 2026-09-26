@@ -141,6 +141,30 @@ class KarmaApiRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("reviewer-3: kill switch - safety stop", response.json()["rollback_history"][-1])
 
+    def test_authenticated_kill_requests_ignore_actor_spoofing_headers(self):
+        wf.AUTH_ENABLED = True
+        wf.AUTH_BEARER_TOKEN = "secret"
+
+        plugin = self.client.post(
+            "/plugins/drafts",
+            headers={"Authorization": "Bearer " + wf.AUTH_BEARER_TOKEN},
+            json={
+                "name": "kill-auth",
+                "owner": "owner",
+                "plugin_type": "integration",
+                "capabilities": ["read_data", "run_workflow"],
+            },
+        ).json()
+
+        response = self.client.post(
+            f"/plugins/{plugin['id']}/kill",
+            headers={"Authorization": "Bearer " + wf.AUTH_BEARER_TOKEN, "X-Actor-Id": "attacker"},
+            json={"requested_by": "spoofed", "reason": "safety stop"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("owner: kill switch - safety stop", response.json()["rollback_history"][-1])
+
     def test_knowledge_base_routes_return_seeded_entries(self):
         wf.AUTH_ENABLED = False
 

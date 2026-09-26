@@ -208,7 +208,6 @@ async def toggle_skill(skill_id: str, payload: SkillToggleRequest):
 
 @app.post("/approvals", dependencies=[Depends(require_auth)])
 async def create_approval(payload: ApprovalRequestCreate):
-    payload = payload.model_copy(update={"requested_by": get_current_actor()})
     return service.create_approval_request(payload)
 
 
