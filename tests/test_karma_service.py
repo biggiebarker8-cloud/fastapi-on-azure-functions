@@ -122,7 +122,7 @@ class KarmaServiceTests(unittest.TestCase):
         )
         self.service.validate_plugin(plugin.id)
         self.service.stage_plugin(plugin.id)
-        approval = self.service.submit_plugin_for_approval(plugin.id, requested_by="owner")
+        approval = self.service.submit_plugin_for_approval(plugin.id)
 
         with self.assertRaises(HTTPException):
             self.service.toggle_plugin(plugin.id, PluginToggleRequest(enabled=True, requested_by="owner"))
@@ -151,7 +151,7 @@ class KarmaServiceTests(unittest.TestCase):
         token = set_current_actor("")
         try:
             with self.assertRaises(HTTPException) as context:
-                self.service.request_learning_policy_change(requested_by="owner")
+                self.service.request_learning_policy_change()
         finally:
             reset_current_actor(token)
 
@@ -168,7 +168,7 @@ class KarmaServiceTests(unittest.TestCase):
         )
         self.service.validate_plugin(plugin.id)
         self.service.stage_plugin(plugin.id)
-        publish_approval = self.service.submit_plugin_for_approval(plugin.id, requested_by="owner")
+        publish_approval = self.service.submit_plugin_for_approval(plugin.id)
         self.service.decide_approval(publish_approval.id, ApprovalDecision(approve=True, decided_by="not-owner"))
 
         updated_plugin = self.store.plugins[plugin.id]
@@ -209,7 +209,7 @@ class KarmaServiceTests(unittest.TestCase):
         )
         self.service.validate_plugin(plugin.id)
         self.service.stage_plugin(plugin.id)
-        publish_approval = self.service.submit_plugin_for_approval(plugin.id, requested_by="owner")
+        publish_approval = self.service.submit_plugin_for_approval(plugin.id)
         self.service.decide_approval(publish_approval.id, ApprovalDecision(approve=True, decided_by="owner"))
 
         update_approval = self.service.update_plugin_version(
@@ -251,7 +251,7 @@ class KarmaServiceTests(unittest.TestCase):
                 LearningPolicyUpdate(auto_approve_low_risk_tuning=True, approval_request_id=None)
             )
 
-        policy_approval = self.service.request_learning_policy_change(requested_by="owner")
+        policy_approval = self.service.request_learning_policy_change()
         self.service.decide_approval(policy_approval.id, ApprovalDecision(approve=True, decided_by="owner"))
         updated = self.service.update_learning_policy(
             LearningPolicyUpdate(auto_approve_low_risk_tuning=True, approval_request_id=policy_approval.id)
@@ -259,7 +259,7 @@ class KarmaServiceTests(unittest.TestCase):
         self.assertTrue(updated["learning_policy"].auto_approve_low_risk_tuning)
 
     def test_low_risk_playbook_can_auto_activate_when_policy_enabled(self) -> None:
-        policy_approval = self.service.request_learning_policy_change(requested_by="owner")
+        policy_approval = self.service.request_learning_policy_change()
         self.service.decide_approval(policy_approval.id, ApprovalDecision(approve=True, decided_by="owner"))
         self.service.update_learning_policy(
             LearningPolicyUpdate(auto_approve_low_risk_tuning=True, approval_request_id=policy_approval.id)

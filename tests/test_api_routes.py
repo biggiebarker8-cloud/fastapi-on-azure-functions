@@ -58,7 +58,7 @@ class KarmaApiRouteTests(unittest.TestCase):
         self.assertEqual(body["tone"], original["tone"])
         self.assertEqual(body["lore"], "new lore")
 
-    def test_owner_approval_routes_use_request_actor_context(self):
+    def test_approval_routes_always_use_request_actor_context(self):
         wf.AUTH_ENABLED = False
 
         response = self.client.post(
@@ -69,12 +69,31 @@ class KarmaApiRouteTests(unittest.TestCase):
                 "target_type": "learning_policy",
                 "target_id": "learning_policy",
                 "requested_by": "spoofed",
-                "required_owner_approval": True,
+                "required_owner_approval": False,
             },
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["requested_by"], "reviewer-1")
+
+    def test_authenticated_requests_ignore_actor_spoofing_headers(self):
+        wf.AUTH_ENABLED = True
+        wf.AUTH_BEARER_TOKEN = "secret"
+
+        response = self.client.post(
+            "/approvals",
+            headers={"Authorization": "Bearer " + wf.AUTH_BEARER_TOKEN, "X-Actor-Id": "attacker"},
+            json={
+                "action_type": "learning_rule_change",
+                "target_type": "learning_policy",
+                "target_id": "learning_policy",
+                "requested_by": "spoofed",
+                "required_owner_approval": True,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["requested_by"], "owner")
 
     def test_knowledge_base_routes_return_seeded_entries(self):
         wf.AUTH_ENABLED = False

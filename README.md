@@ -15,7 +15,7 @@ http://<FunctionAppName>.azurewebsites.net/sample
 http://<FunctionAppName>.azurewebsites.net/hello/Foo
 ```
 
-You can call the URL endpoints using your browser (GET requests) or one one of these HTTP test tools:
+You can call the URL endpoints using your browser (GET requests) or one of these HTTP test tools:
 
 - [Visual Studio Code](https://code.visualstudio.com/download) with an [extension from Visual Studio Marketplace](https://marketplace.visualstudio.com/vscode)
 - [PowerShell Invoke-RestMethod](https://learn.microsoft.com/powershell/module/microsoft.powershell.utility/invoke-restmethod)

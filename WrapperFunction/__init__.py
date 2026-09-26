@@ -90,7 +90,8 @@ async def require_auth(
                 detail="Invalid or missing bearer token.",
             )
 
-    token = set_current_actor(request.headers.get("X-Actor-Id", "owner"))
+    actor_id = request.headers.get("X-Actor-Id", "owner") if not AUTH_ENABLED else "owner"
+    token = set_current_actor(actor_id)
     try:
         yield
     finally:
@@ -165,8 +166,8 @@ async def stage_plugin(plugin_id: str):
 
 
 @app.post("/plugins/{plugin_id}/approval-request", dependencies=[Depends(require_auth)])
-async def submit_plugin_approval(plugin_id: str, requested_by: str = "owner", reason: str = ""):
-    return service.submit_plugin_for_approval(plugin_id, requested_by=requested_by, reason=reason)
+async def submit_plugin_approval(plugin_id: str, reason: str = ""):
+    return service.submit_plugin_for_approval(plugin_id, reason=reason)
 
 
 @app.patch("/plugins/{plugin_id}/version", dependencies=[Depends(require_auth)])
@@ -207,8 +208,7 @@ async def toggle_skill(skill_id: str, payload: SkillToggleRequest):
 
 @app.post("/approvals", dependencies=[Depends(require_auth)])
 async def create_approval(payload: ApprovalRequestCreate):
-    if payload.required_owner_approval:
-        payload = payload.model_copy(update={"requested_by": get_current_actor()})
+    payload = payload.model_copy(update={"requested_by": get_current_actor()})
     return service.create_approval_request(payload)
 
 
@@ -249,8 +249,8 @@ async def list_playbooks():
 
 
 @app.post("/learning/policy/approval-request", dependencies=[Depends(require_auth)])
-async def request_learning_policy_change(requested_by: str = "owner", reason: str = ""):
-    return service.request_learning_policy_change(requested_by=requested_by, reason=reason)
+async def request_learning_policy_change(reason: str = ""):
+    return service.request_learning_policy_change(reason=reason)
 
 
 @app.get("/learning/policy", dependencies=[Depends(require_auth)])

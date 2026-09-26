@@ -310,7 +310,6 @@ class KarmaService:
     def submit_plugin_for_approval(
         self,
         plugin_id: str,
-        requested_by: str = "owner",
         reason: str = "",
     ) -> ApprovalRequest:
         plugin = self._get_plugin_or_404(plugin_id)
@@ -520,7 +519,6 @@ class KarmaService:
 
     def request_learning_policy_change(
         self,
-        requested_by: str = "owner",
         reason: str = "",
     ) -> ApprovalRequest:
         return self.create_approval_request(
