@@ -218,5 +218,11 @@ This sample now includes additional API routes for a creative assistant profile 
 - `POST /merch-designs` for `hoodie`/`tshirt` design workflow metadata (`hoodie`: front/back/sleeve/full, `tshirt`: front/back/full)
 - `POST /image-edits` for image-edit requests against existing assets
 - `GET /assets`, `GET /assets/{asset_id}`, and `POST /assets/{asset_id}/versions/{version}/restore` for asset payloads with embedded version history
+- `POST /plugins/drafts`, `POST /plugins/{id}/validate`, `POST /plugins/{id}/staging-test`, and `POST /plugins/{id}/approval-request` for plugin lifecycle
+- `PATCH /plugins/{id}/version`, `PATCH /plugins/{id}/enabled`, `POST /plugins/{id}/rollback`, and `POST /plugins/{id}/kill` for controlled release and kill switch operations
+- `POST /skills`, `PATCH /skills/{id}/enabled` for skill registry with external-access approval gates
+- `POST /approvals`, `GET /approvals`, and `POST /approvals/{id}/decision` for explicit owner approval workflows
+- `POST /learning/events`, `POST /playbooks`, and `GET /playbooks` for self-learning event capture and playbook generation
+- `POST /learning/policy/approval-request`, `GET /learning/policy`, and `PUT /learning/policy` for approval-gated learning-policy changes (`auto_approve_low_risk_tuning`)
 
 These routes use an in-memory store intended as scaffolding for a future persistent backend.

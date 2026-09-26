@@ -2,7 +2,21 @@ import unittest
 
 from pydantic import ValidationError
 
-from WrapperFunction.models import AssistantIdentity, ImageEditRequest, MerchDesignCreate, UniverseCreate
+from fastapi import HTTPException
+
+from WrapperFunction.models import (
+    ApprovalDecision,
+    AssistantIdentity,
+    ImageEditRequest,
+    LearningPolicyUpdate,
+    MerchDesignCreate,
+    PlaybookCreate,
+    PluginDraftCreate,
+    PluginToggleRequest,
+    SkillCreate,
+    SkillToggleRequest,
+    UniverseCreate,
+)
 from WrapperFunction.services import KarmaService
 from WrapperFunction.storage import InMemoryStore
 
@@ -89,6 +103,78 @@ class KarmaServiceTests(unittest.TestCase):
                 print_area="sleeve",
                 theme_prompt="invalid combo",
             )
+
+    def test_plugin_promotion_requires_owner_approval(self) -> None:
+        plugin = self.service.draft_plugin(
+            PluginDraftCreate(
+                name="shop-sync",
+                owner="owner",
+                plugin_type="integration",
+                capabilities=["read_data", "run_workflow"],
+            )
+        )
+        self.service.validate_plugin(plugin.id)
+        self.service.stage_plugin(plugin.id)
+        approval = self.service.submit_plugin_for_approval(plugin.id, requested_by="owner")
+
+        with self.assertRaises(HTTPException):
+            self.service.toggle_plugin(plugin.id, PluginToggleRequest(enabled=True, requested_by="owner"))
+
+        self.service.decide_approval(approval.id, ApprovalDecision(approve=True, decided_by="owner"))
+        enabled = self.service.toggle_plugin(plugin.id, PluginToggleRequest(enabled=True, requested_by="owner"))
+        self.assertEqual(enabled.lifecycle_state, "enabled")
+
+    def test_skill_external_access_requires_approval(self) -> None:
+        skill = self.service.create_skill(
+            SkillCreate(
+                name="tiktok-analytics",
+                owner="owner",
+                skill_type="analytics",
+                capabilities=["analyze_metrics", "use_external_api"],
+                external_api_access=True,
+            )
+        )
+        self.assertFalse(skill.enabled)
+        self.assertIsNotNone(skill.approval_request_id)
+
+        with self.assertRaises(HTTPException):
+            self.service.toggle_skill(skill.id, SkillToggleRequest(enabled=True, requested_by="owner"))
+
+        assert skill.approval_request_id is not None
+        self.service.decide_approval(skill.approval_request_id, ApprovalDecision(approve=True, decided_by="owner"))
+        enabled = self.service.toggle_skill(skill.id, SkillToggleRequest(enabled=True, requested_by="owner"))
+        self.assertTrue(enabled.enabled)
+
+    def test_learning_policy_change_requires_approved_request(self) -> None:
+        with self.assertRaises(HTTPException):
+            self.service.update_learning_policy(
+                LearningPolicyUpdate(auto_approve_low_risk_tuning=True, approval_request_id=None)
+            )
+
+        policy_approval = self.service.request_learning_policy_change(requested_by="owner")
+        self.service.decide_approval(policy_approval.id, ApprovalDecision(approve=True, decided_by="owner"))
+        updated = self.service.update_learning_policy(
+            LearningPolicyUpdate(auto_approve_low_risk_tuning=True, approval_request_id=policy_approval.id)
+        )
+        self.assertTrue(updated["learning_policy"].auto_approve_low_risk_tuning)
+
+    def test_low_risk_playbook_can_auto_activate_when_policy_enabled(self) -> None:
+        policy_approval = self.service.request_learning_policy_change(requested_by="owner")
+        self.service.decide_approval(policy_approval.id, ApprovalDecision(approve=True, decided_by="owner"))
+        self.service.update_learning_policy(
+            LearningPolicyUpdate(auto_approve_low_risk_tuning=True, approval_request_id=policy_approval.id)
+        )
+
+        playbook = self.service.propose_playbook(
+            PlaybookCreate(
+                title="Campaign recap",
+                trigger="positive campaign outcomes",
+                actions=["save template", "reuse hooks"],
+                risk_level="low",
+                requested_by="owner",
+            )
+        )
+        self.assertEqual(playbook.status, "active")
 
 
 if __name__ == "__main__":

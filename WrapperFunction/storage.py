@@ -4,7 +4,20 @@ from copy import deepcopy
 from datetime import datetime, timezone
 from threading import RLock
 
-from .models import Asset, AssetVersion, Character, Story, Universe, UserPreferenceProfile
+from .models import (
+    ApprovalRequest,
+    Asset,
+    AssetVersion,
+    Character,
+    LearningEvent,
+    LearningPolicy,
+    Playbook,
+    Plugin,
+    Skill,
+    Story,
+    Universe,
+    UserPreferenceProfile,
+)
 
 
 def _now_iso() -> str:
@@ -19,6 +32,12 @@ class InMemoryStore:
         self.stories: dict[str, Story] = {}
         self.assets: dict[str, Asset] = {}
         self.preferences: UserPreferenceProfile = UserPreferenceProfile()
+        self.plugins: dict[str, Plugin] = {}
+        self.skills: dict[str, Skill] = {}
+        self.approvals: dict[str, ApprovalRequest] = {}
+        self.learning_events: dict[str, LearningEvent] = {}
+        self.playbooks: dict[str, Playbook] = {}
+        self.learning_policy: LearningPolicy = LearningPolicy()
 
     def add_universe(self, universe: Universe) -> Universe:
         with self.lock:
@@ -39,6 +58,31 @@ class InMemoryStore:
         with self.lock:
             self.assets[asset.id] = asset
         return asset
+
+    def add_plugin(self, plugin: Plugin) -> Plugin:
+        with self.lock:
+            self.plugins[plugin.id] = plugin
+        return plugin
+
+    def add_skill(self, skill: Skill) -> Skill:
+        with self.lock:
+            self.skills[skill.id] = skill
+        return skill
+
+    def add_approval(self, approval: ApprovalRequest) -> ApprovalRequest:
+        with self.lock:
+            self.approvals[approval.id] = approval
+        return approval
+
+    def add_learning_event(self, event: LearningEvent) -> LearningEvent:
+        with self.lock:
+            self.learning_events[event.id] = event
+        return event
+
+    def add_playbook(self, playbook: Playbook) -> Playbook:
+        with self.lock:
+            self.playbooks[playbook.id] = playbook
+        return playbook
 
     def append_asset_version(
         self,

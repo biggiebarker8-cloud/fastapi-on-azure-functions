@@ -6,13 +6,25 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from .config import ASSISTANT_AUTHORITY_RULE, ASSISTANT_NAME, ASSISTANT_STYLE
 from .models import (
+    ApprovalDecision,
+    ApprovalRequestCreate,
     AssistantIdentity,
     CharacterCreate,
     ImageEditRequest,
     IdentityUpdate,
+    LearningEventCreate,
+    LearningPolicyUpdate,
     MerchDesignCreate,
     NonLinearThoughtRequest,
+    PlaybookCreate,
     PreferenceUpdate,
+    PluginDraftCreate,
+    PluginKillRequest,
+    PluginRollbackRequest,
+    PluginToggleRequest,
+    PluginVersionUpdate,
+    SkillCreate,
+    SkillToggleRequest,
     StoryCreate,
     UniverseCreate,
 )
@@ -108,6 +120,119 @@ async def update_preferences(payload: PreferenceUpdate):
 @app.post("/structure-thought", dependencies=[Depends(require_auth)])
 async def structure_thought(payload: NonLinearThoughtRequest):
     return service.structure_non_linear_input(payload)
+
+
+@app.post("/plugins/drafts", dependencies=[Depends(require_auth)])
+async def create_plugin_draft(payload: PluginDraftCreate):
+    return service.draft_plugin(payload)
+
+
+@app.get("/plugins", dependencies=[Depends(require_auth)])
+async def list_plugins():
+    return list(store.plugins.values())
+
+
+@app.post("/plugins/{plugin_id}/validate", dependencies=[Depends(require_auth)])
+async def validate_plugin(plugin_id: str):
+    return service.validate_plugin(plugin_id)
+
+
+@app.post("/plugins/{plugin_id}/staging-test", dependencies=[Depends(require_auth)])
+async def stage_plugin(plugin_id: str):
+    return service.stage_plugin(plugin_id)
+
+
+@app.post("/plugins/{plugin_id}/approval-request", dependencies=[Depends(require_auth)])
+async def submit_plugin_approval(plugin_id: str, requested_by: str = "owner", reason: str = ""):
+    return service.submit_plugin_for_approval(plugin_id, requested_by=requested_by, reason=reason)
+
+
+@app.patch("/plugins/{plugin_id}/version", dependencies=[Depends(require_auth)])
+async def update_plugin_version(plugin_id: str, payload: PluginVersionUpdate):
+    return service.update_plugin_version(plugin_id, payload)
+
+
+@app.patch("/plugins/{plugin_id}/enabled", dependencies=[Depends(require_auth)])
+async def toggle_plugin(plugin_id: str, payload: PluginToggleRequest):
+    return service.toggle_plugin(plugin_id, payload)
+
+
+@app.post("/plugins/{plugin_id}/rollback", dependencies=[Depends(require_auth)])
+async def rollback_plugin(plugin_id: str, payload: PluginRollbackRequest):
+    return service.rollback_plugin(plugin_id, payload)
+
+
+@app.post("/plugins/{plugin_id}/kill", dependencies=[Depends(require_auth)])
+async def kill_plugin(plugin_id: str, payload: PluginKillRequest):
+    return service.kill_plugin(plugin_id, payload)
+
+
+@app.post("/skills", dependencies=[Depends(require_auth)])
+async def create_skill(payload: SkillCreate):
+    return service.create_skill(payload)
+
+
+@app.get("/skills", dependencies=[Depends(require_auth)])
+async def list_skills():
+    return list(store.skills.values())
+
+
+@app.patch("/skills/{skill_id}/enabled", dependencies=[Depends(require_auth)])
+async def toggle_skill(skill_id: str, payload: SkillToggleRequest):
+    return service.toggle_skill(skill_id, payload)
+
+
+@app.post("/approvals", dependencies=[Depends(require_auth)])
+async def create_approval(payload: ApprovalRequestCreate):
+    return service.create_approval_request(payload)
+
+
+@app.get("/approvals", dependencies=[Depends(require_auth)])
+async def list_approvals(status_filter: str | None = None):
+    values = list(store.approvals.values())
+    if not status_filter:
+        return values
+    return [item for item in values if item.status == status_filter]
+
+
+@app.post("/approvals/{approval_id}/decision", dependencies=[Depends(require_auth)])
+async def decide_approval(approval_id: str, payload: ApprovalDecision):
+    return service.decide_approval(approval_id, payload)
+
+
+@app.post("/learning/events", dependencies=[Depends(require_auth)])
+async def create_learning_event(payload: LearningEventCreate):
+    return service.record_learning_event(payload)
+
+
+@app.get("/learning/events", dependencies=[Depends(require_auth)])
+async def list_learning_events():
+    return list(store.learning_events.values())
+
+
+@app.post("/playbooks", dependencies=[Depends(require_auth)])
+async def create_playbook(payload: PlaybookCreate):
+    return service.propose_playbook(payload)
+
+
+@app.get("/playbooks", dependencies=[Depends(require_auth)])
+async def list_playbooks():
+    return list(store.playbooks.values())
+
+
+@app.post("/learning/policy/approval-request", dependencies=[Depends(require_auth)])
+async def request_learning_policy_change(requested_by: str = "owner", reason: str = ""):
+    return service.request_learning_policy_change(requested_by=requested_by, reason=reason)
+
+
+@app.get("/learning/policy", dependencies=[Depends(require_auth)])
+async def get_learning_policy():
+    return store.learning_policy
+
+
+@app.put("/learning/policy", dependencies=[Depends(require_auth)])
+async def update_learning_policy(payload: LearningPolicyUpdate):
+    return service.update_learning_policy(payload)
 
 
 @app.post("/universes", dependencies=[Depends(require_auth)])
