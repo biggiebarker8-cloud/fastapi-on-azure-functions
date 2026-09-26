@@ -22,6 +22,12 @@ class AssistantIdentity(BaseModel):
     authority_rule: str = "User is the final decision-maker; assistant advises and executes."
 
 
+class IdentityUpdate(BaseModel):
+    name: str | None = None
+    tone: str | None = None
+    lore: str | None = None
+
+
 class UniverseCreate(BaseModel):
     name: str
     canon: str = ""

@@ -8,6 +8,7 @@ from .config import ASSISTANT_AUTHORITY_RULE, ASSISTANT_NAME, ASSISTANT_STYLE
 from .models import (
     AssistantIdentity,
     CharacterCreate,
+    IdentityUpdate,
     ImageEditRequest,
     MerchDesignCreate,
     NonLinearThoughtRequest,
@@ -91,8 +92,8 @@ async def get_identity():
 
 
 @app.put("/identity", dependencies=[Depends(require_auth)])
-async def update_identity(name: str | None = None, tone: str | None = None, lore: str | None = None):
-    return service.set_identity(name=name, tone=tone, lore=lore)
+async def update_identity(payload: IdentityUpdate):
+    return service.set_identity(name=payload.name, tone=payload.tone, lore=payload.lore)
 
 
 @app.get("/preferences", dependencies=[Depends(require_auth)])

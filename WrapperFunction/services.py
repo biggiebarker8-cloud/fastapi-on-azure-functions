@@ -119,6 +119,7 @@ class KarmaService:
                 raise HTTPException(status_code=400, detail=check.reason)
 
             continuity_notes: list[str] = []
+            validated_crossover_universe_ids: set[str] = set()
             for character_id in payload.character_ids:
                 character = self.store.characters.get(character_id)
                 if not character:
@@ -126,6 +127,7 @@ class KarmaService:
 
                 if character.universe_id != payload.universe_id:
                     if payload.allow_crossover and character.universe_id in payload.crossover_universe_ids:
+                        validated_crossover_universe_ids.add(character.universe_id)
                         continuity_notes.append(
                             f"Crossover allowed for character {character_id} from universe {character.universe_id}."
                         )
@@ -138,6 +140,8 @@ class KarmaService:
             story_payload = payload.model_dump(exclude={"allow_crossover"})
             if not payload.allow_crossover:
                 story_payload["crossover_universe_ids"] = []
+            else:
+                story_payload["crossover_universe_ids"] = sorted(validated_crossover_universe_ids)
             story = Story(
                 **story_payload,
                 continuity_notes=continuity_notes,
